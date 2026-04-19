@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up - NexTrade</title>
@@ -40,7 +39,7 @@
     <!-- Header -->
     <div class="text-center mb-8">
       <a href="index.html" class="inline-flex items-center gap-2 text-primary font-bold text-2xl mb-4">
-        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+        <i class="fas fa-arrow-trend-up"></i> NexTrade
       </a>
       <h1 class="text-2xl font-bold text-gray-900">Create Account</h1>
       <p class="text-gray-500 text-sm mt-1">Join NexTrade – India's B2B Marketplace</p>
@@ -148,7 +147,7 @@
       }
 
       try {
-        const res = await fetch(CONFIG.API_BASE_URL + "/api/signup", {
+        const res = await fetch("/api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password, role, gstNumber })

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <title>NexTrade | Retailer Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,7 +48,7 @@
 
     <div class="flex items-center justify-between mb-10">
       <a href="retailer-dashboard.html" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
-        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+        <i class="fas fa-arrow-trend-up text-primary-light"></i> NexTrade
       </a>
       <button id="closeSidebar" class="text-gray-400 hover:text-gray-700 lg:hidden text-lg focus:outline-none">
         <i class="fas fa-times"></i>
@@ -330,12 +329,12 @@
 
     async function loadData() {
       try {
-        const wRes = await fetch(CONFIG.API_BASE_URL + '/api/user/wholesalers');
+        const wRes = await fetch('/api/user/wholesalers');
         let wData = { wholesalers: [] };
         if (wRes.ok) wData = await wRes.json();
         document.getElementById("statProducts").innerText = wData.wholesalers ? wData.wholesalers.length : 0;
 
-        const unreadRes  = await fetch(CONFIG.API_BASE_URL + '/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } });
+        const unreadRes  = await fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } });
         const unreadData = await unreadRes.json();
         const msgBadge   = document.getElementById("msgBadge");
         if (unreadData.success && unreadData.count > 0) {
@@ -345,13 +344,13 @@
           msgBadge.style.display = "none";
         }
 
-        const cRes = await fetch(CONFIG.API_BASE_URL + '/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
+        const cRes = await fetch('/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
         const cData = await cRes.json();
         const conversations = cData.conversations || [];
         document.getElementById("statMessages").innerText = conversations.length;
 
         try {
-          const dealsRes  = await fetch(CONFIG.API_BASE_URL + '/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+          const dealsRes  = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
           const dealsData = await dealsRes.json();
           if (dealsData.success) {
             const allDeals = dealsData.deals;
@@ -388,7 +387,7 @@
         }
 
         try {
-          const rRes  = await fetch(CONFIG.API_BASE_URL + '/api/recommendations', { headers: { Authorization: `Bearer ${token}` } });
+          const rRes  = await fetch('/api/recommendations', { headers: { Authorization: `Bearer ${token}` } });
           const rData = await rRes.json();
           const recContainer = document.getElementById('recommendationsList');
           if(rData.success && rData.recommendations.length > 0) {
@@ -446,12 +445,12 @@
       setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(), 300); }, 4000);
     }
 
-    const socket = io(CONFIG.API_BASE_URL);
+    const socket = io();
     socket.emit("register", user._id);
     socket.on("receive_message", (data) => {
       if (data.receiverId === user._id) {
         showToast(`New message from ${data.senderName || 'someone'}`, 'info');
-        fetch(CONFIG.API_BASE_URL + '/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
+        fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
           .then(res => res.json())
           .then(d => {
             const badge = document.getElementById("msgBadge");

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile | NexTrade</title>
@@ -147,7 +146,7 @@
          class="fixed left-0 top-0 w-64 h-screen bg-white shadow-md z-[100] flex flex-col p-6 -translate-x-full lg:translate-x-0 transition-transform duration-300">
     <div class="flex items-center justify-between mb-10">
       <a href="#" id="logoLink" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
-        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+        <i class="fas fa-arrow-trend-up text-primary-light"></i> NexTrade
       </a>
       <button id="closeSidebar" class="text-gray-400 hover:text-gray-700 text-xl lg:hidden border-none bg-transparent cursor-pointer"><i class="fas fa-times"></i></button>
     </div>
@@ -557,7 +556,7 @@
 
         try {
             document.getElementById("loader").style.display = "flex";
-            const res  = await fetch(CONFIG.API_BASE_URL + "/api/update-profile", { method:"POST", headers:{"Authorization":`Bearer ${authToken}`}, body:formData });
+            const res  = await fetch("/api/update-profile", { method:"POST", headers:{"Authorization":`Bearer ${authToken}`}, body:formData });
             const data = await res.json();
             if (res.ok) {
                 userData = data.user || userData;
@@ -701,7 +700,7 @@
         try {
             if (!isResend && btn)   { btn.disabled = true; btn.innerText = "Sending..."; }
             if (isResend && resendBtn) { resendBtn.disabled = true; resendBtn.innerText = "Sending..."; }
-            const res  = await fetch(CONFIG.API_BASE_URL + "/api/auth/send-otp", { method:"POST", headers:{"Authorization":"Bearer "+authToken} });
+            const res  = await fetch("/api/auth/send-otp", { method:"POST", headers:{"Authorization":"Bearer "+authToken} });
             const data = await res.json();
             if (data.success) {
                 showToast(data.message, "success");
@@ -738,7 +737,7 @@
         const otp = otpInput ? otpInput.value.trim() : '';
         if (!otp || otp.length !== 6) { showToast("Please enter a valid 6-digit OTP", "warning"); return; }
         try {
-            const res  = await fetch(CONFIG.API_BASE_URL + "/api/auth/verify-otp", { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+authToken}, body:JSON.stringify({otp}) });
+            const res  = await fetch("/api/auth/verify-otp", { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+authToken}, body:JSON.stringify({otp}) });
             const data = await res.json();
             if (data.success) {
                 showToast(data.message, "success");
