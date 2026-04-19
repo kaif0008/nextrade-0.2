@@ -63,8 +63,7 @@
 
 <body class="bg-gray-50 flex min-h-screen font-sans overflow-x-hidden">
 
-  <!-- Sidebar Overlay -->
-  <div class="modal-overlay" id="sidebarOverlay"></div>
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300"></div>
 
   <!-- SIDEBAR -->
   <aside id="sidebar"
@@ -207,8 +206,8 @@
     // Sidebar toggle
     const sidebar = document.getElementById("sidebar");
     const sidebarOverlay = document.getElementById("sidebarOverlay");
-    function openSB()  { sidebar.classList.remove('-translate-x-full'); sidebarOverlay.classList.add('active'); }
-    function closeSB() { sidebar.classList.add('-translate-x-full');    sidebarOverlay.classList.remove('active'); }
+    function openSB()  { sidebar.classList.remove('-translate-x-full'); sidebarOverlay.classList.remove('hidden'); }
+    function closeSB() { sidebar.classList.add('-translate-x-full');    sidebarOverlay.classList.add('hidden'); }
     document.getElementById("openSidebar").addEventListener("click", openSB);
     document.getElementById("closeSidebar").addEventListener("click", closeSB);
     sidebarOverlay.addEventListener("click", closeSB);
