@@ -1596,9 +1596,8 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
     const { message: userMsg, history } = req.body;
     const msgLower = userMsg.toLowerCase();
 
-    // TOOL GUARD: Only enable tools if message implies data inquiry
-    const toolKeywords = ['search', 'find', 'product', 'deal', 'stock', 'inventory', 'requirement', 'price', 'update', 'status', 'analytics', 'moq', 'wholesaler', 'detail'];
-    const useTools = toolKeywords.some(kw => msgLower.includes(kw));
+    // Always allow the LLM to access tools so it can verify data naturally
+    const useTools = true;
 
     // Fetch full user for role and context
     const fullUser = await User.findById(req.user.id);
@@ -1735,12 +1734,12 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
     User's role: ${role}
     
     STRICT OPERATIONAL RULES:
-    1. CONVERSATIONAL: For greetings or gratitude, respond naturally as Nexa. Do NOT use tools.
-    2. TOOL USAGE: ONLY call a tool if the user's request requires fetching or updating real-time data.
-    3. VALID JSON ONLY: When using a tool, you must generate a structured tool call. NEVER output XML tags like <function> or any other text around the tool call.
-    4. HTML FORMATTING: Always use HTML (<b>, <ul>, <li>, <table border="1">) for data presentation.
-    5. NO HALLUCINATION: If a tool returns no data, inform the user politely. Do not invent products or deals.
-    6. LIMITED ACCESS: You can view deal statuses but cannot accept/reject deals.`;
+    1. NEVER hallucinate or invent data. You MUST ONLY use the real data returned by your tools.
+    2. If a user asks for products, wholesalers, or deals, you MUST call the appropriate tool (e.g. search_products or explore_wholesalers).
+    3. If the tool returns an empty array "[]" or an error, you MUST politely inform the user that the requested data is not currently available.
+    4. Do not output raw function calls like "get_deals()" in your text response. Wait for the actual tool call to return data.
+    5. Always use HTML (<b>, <ul>, <li>, <table border="1">) for data presentation.
+    ${role === 'retailer' ? `6. INQUIRY BUTTON: Whenever you show a product from the database, you MUST add a stylized "Send Inquiry" button for it using this exact HTML template: <br><a href="messages.html?user={wholesalerId}&productId={productId}&productName={encodedName}&price={price}&moq={moq}&stock={stock}" style="display:inline-block; margin-top:5px; padding:6px 12px; background:#4361ee; color:white; border-radius:6px; text-decoration:none; font-size:12px; font-weight:600;">Send Inquiry</a> (Ensure you substitute the curly brackets with the exact IDs and values returned from the tool. Encode the productName to be URL-safe.)` : ''}`;
 
     let messages = [
       { role: "system", content: systemPrompt }
@@ -1794,38 +1793,63 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
             if (functionName === "search_products") {
               const { query, category } = functionArgs;
               let filter = { stock: { $gt: 0 } };
-              if (query) filter.name = new RegExp(query, 'i');
-              if (category) filter.category = new RegExp(category, 'i');
+              let conditions = [];
+              if (query) {
+                conditions.push({
+                  $or: [
+                    { name: new RegExp(query, 'i') },
+                    { category: new RegExp(query, 'i') }
+                  ]
+                });
+              }
+              if (category) {
+                conditions.push({ category: new RegExp(category, 'i') });
+              }
+              if (conditions.length > 0) filter.$and = conditions;
 
-              const products = await Product.find(filter).populate('wholesalerId', 'businessName city').limit(15);
+              const products = await Product.find(filter).populate('wholesalerId', 'businessName city _id').limit(15);
               toolResult = products.map(p => ({
+                productId: p._id,
                 name: p.name,
-                price: `₹${p.pricePerUnit}/${p.unit}`,
+                price: p.pricePerUnit,
                 moq: p.moq,
                 stock: p.stock,
                 category: p.category,
-                wholesaler: p.wholesalerId?.businessName || 'Unknown',
+                wholesalerName: p.wholesalerId?.businessName || 'Unknown',
+                wholesalerId: p.wholesalerId?._id || '',
                 location: p.wholesalerId ? p.wholesalerId.city : 'N/A'
               }));
 
             } else if (functionName === "explore_wholesalers") {
               const { name: searchName, category, location } = functionArgs;
               let filter = { role: 'wholesaler' };
-              if (searchName) filter.name = new RegExp(searchName, 'i');
-              if (category) filter.categories = { $in: [new RegExp(category, 'i')] };
-              if (location) {
-                filter.$or = [
-                  { city: new RegExp(location, 'i') },
-                  { state: new RegExp(location, 'i') }
-                ];
+              const andConditions = [];
+              if (searchName) andConditions.push({ name: new RegExp(searchName, 'i') });
+              if (category) {
+                andConditions.push({
+                   $or: [
+                     { categories: { $in: [new RegExp(category, 'i')] } },
+                     { industry: new RegExp(category, 'i') }
+                   ]
+                });
               }
+              if (location) {
+                andConditions.push({
+                   $or: [
+                     { city: new RegExp(location, 'i') },
+                     { state: new RegExp(location, 'i') }
+                   ]
+                });
+              }
+              if (andConditions.length > 0) filter.$and = andConditions;
+
               const ws = await User.find(filter).limit(15);
               toolResult = ws.map(w => ({
+                id: w._id,
                 name: w.name,
                 business: w.businessName,
-                categories: w.categories.join(', '),
-                location: `${w.city || ''}, ${w.state || ''}`,
-                id: w._id
+                categories: (w.categories && w.categories.length > 0) ? w.categories.join(', ') : (w.industry || 'General'),
+                location: `${w.city || ''}, ${w.state || ''}`
               }));
 
             } else if (functionName === "get_product_details") {

@@ -280,8 +280,19 @@
         const city = cityFilter.value;
         const vOnly = verifiedOnly.checked;
         state.filtered = state.all.filter(w => {
-          const matchesSearch = (w.name && w.name.toLowerCase().includes(term)) || (w.businessName && w.businessName.toLowerCase().includes(term)) || (w.email && w.email.toLowerCase().includes(term));
-          const matchesCategory = state.activeCategory === '' || w.businessCategory === state.activeCategory;
+          const matchesSearch = term === '' || 
+            (w.name && w.name.toLowerCase().includes(term)) || 
+            (w.businessName && w.businessName.toLowerCase().includes(term)) || 
+            (w.email && w.email.toLowerCase().includes(term)) ||
+            (w.categories && w.categories.some(c => c.toLowerCase().includes(term))) ||
+            (w.businessCategory && w.businessCategory.toLowerCase().includes(term)) ||
+            (w.industry && w.industry.toLowerCase().includes(term)) ||
+            (w.city && w.city.toLowerCase().includes(term)) ||
+            (w.shopAddress && w.shopAddress.toLowerCase().includes(term));
+          const matchesCategory = state.activeCategory === '' || 
+            (w.categories && w.categories.includes(state.activeCategory)) || 
+            w.businessCategory === state.activeCategory ||
+            w.industry === state.activeCategory;
           const matchesCity = city === '' || (w.shopAddress === city || w.city === city);
           const matchesVerified = vOnly ? isVerified(w) : true;
           return matchesSearch && matchesCategory && matchesCity && matchesVerified;
@@ -328,7 +339,15 @@
           const initial = bName.charAt(0).toUpperCase();
           const color = getAvatarColor(w._id);
           const verifiedHtml = isVerified(w) ? '<i class="fas fa-check-circle verified-badge" title="Verified Wholesaler"></i>' : '';
-          const tag = w.businessCategory || 'General Wholesaler';
+          let tags = [];
+          if (w.categories && w.categories.length > 0) {
+            tags = w.categories;
+          } else if (w.businessCategory) {
+            tags = [w.businessCategory];
+          } else if (w.industry) {
+            tags = [w.industry];
+          }
+          const tag = tags.length > 0 ? tags.slice(0, 2).join(', ') + (tags.length > 2 ? '...' : '') : 'General Wholesaler';
           const location = w.shopAddress || w.city || 'India';
           const card = document.createElement("div");
           card.className = "ws-card";
