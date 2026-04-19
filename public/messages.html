@@ -291,6 +291,7 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script>
     /* ═══════════════════════════════════════════════════════════════
@@ -300,7 +301,7 @@
     const token = localStorage.getItem("token");
     if (!user || !token) location.href = "login.html";
 
-    const socket = io();
+    const socket = io(CONFIG.API_BASE_URL);
     let currentUser = null;
     let onlineUsers = [];
     let typingTimeout;
@@ -357,12 +358,12 @@
 
     // ===================== CONVERSATIONS =====================
     async function markAllAsRead(senderId) {
-        try { await fetch('/api/messages/read-all/' + senderId, { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token } }); } catch (e) { console.error('Error marking as read:', e); }
+        try { await fetch(CONFIG.API_BASE_URL + '/api/messages/read-all/' + senderId, { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token } }); } catch (e) { console.error('Error marking as read:', e); }
     }
 
     async function loadConversations() {
         try {
-            const res  = await fetch("/api/conversations", { headers: { Authorization: "Bearer " + token } });
+            const res  = await fetch(CONFIG.API_BASE_URL + "/api/conversations", { headers: { Authorization: "Bearer " + token } });
             const data = await res.json();
             if (data.success) renderUserList(data.conversations);
         } catch (e) { console.error(e); }
@@ -398,9 +399,9 @@
         document.querySelectorAll(".contact-item").forEach(function(i){ i.classList.remove("active"); });
         var ci = document.getElementById('user-' + id);
         if (ci) ci.classList.add("active");
-        fetch('/api/messages/read-all/' + id, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
+        fetch(CONFIG.API_BASE_URL + '/api/messages/read-all/' + id, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
         try {
-            const res  = await fetch('/api/messages/' + id, { headers: { Authorization: "Bearer " + token } });
+            const res  = await fetch(CONFIG.API_BASE_URL + '/api/messages/' + id, { headers: { Authorization: "Bearer " + token } });
             const data = await res.json();
             const box  = document.getElementById("chatBox");
             box.innerHTML = "";
@@ -413,7 +414,7 @@
             }
         } catch (e) { console.error(e); }
         try {
-            const resRating = await fetch('/api/wholesalers/' + id + '/rating');
+            const resRating = await fetch(CONFIG.API_BASE_URL + '/api/wholesalers/' + id + '/rating');
             const rtData    = await resRating.json();
             const chatRating = document.getElementById("chatRating");
             if (rtData.success && rtData.averageRating > 0) { chatRating.style.display="flex"; chatRating.querySelector("span").innerText = Number(rtData.averageRating).toFixed(1); }
@@ -520,7 +521,7 @@
             if (maxAllowed && qty > parseInt(maxAllowed)) { showToast('Wait, you are exceeding available stock limits', 'error'); return; }
         }
         try {
-            const res  = await fetch('/api/deals/' + dealId + '/update', { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({quantity:qty,offeredPrice:price}) });
+            const res  = await fetch(CONFIG.API_BASE_URL + '/api/deals/' + dealId + '/update', { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({quantity:qty,offeredPrice:price}) });
             const data = await res.json();
             if (data.success) { closeOfferModal(); showToast('Offer updated successfully!', 'success'); openChat(currentUser, document.getElementById('chatTitle').innerText); }
             else showToast(data.message || 'Failed to update offer', 'error');
@@ -533,7 +534,7 @@
         var label = { wholesaler_accepted: 'accept', rejected: 'reject/cancel', confirmed: 'confirm' }[status] || status;
         if (!confirm('Are you sure you want to ' + label + ' this deal?')) return;
         try {
-            const res  = await fetch('/api/deals/' + dealId + '/status', { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({status:status}) });
+            const res  = await fetch(CONFIG.API_BASE_URL + '/api/deals/' + dealId + '/status', { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({status:status}) });
             const data = await res.json();
             if (data.success) {
                 var msgs = { wholesaler_accepted: 'Deal accepted! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal rejected ❌' };
@@ -613,7 +614,7 @@
     async function deleteConversation() {
         if (!currentUser || !confirm("Delete this conversation for you?")) return;
         try {
-            const res  = await fetch('/api/messages/' + currentUser, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+            const res  = await fetch(CONFIG.API_BASE_URL + '/api/messages/' + currentUser, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
             const data = await res.json();
             if (data.success) {
                 document.getElementById("activeChat").style.display = "none";
@@ -729,7 +730,7 @@
         if (user.role === 'wholesaler') {
             productSelectGroup.style.display = 'block';
             try {
-                const res  = await fetch('/api/products/my', { headers: { Authorization: "Bearer " + token } });
+                const res  = await fetch(CONFIG.API_BASE_URL + '/api/products/my', { headers: { Authorization: "Bearer " + token } });
                 const data = await res.json();
                 if (data.success) {
                     productSelect.innerHTML = '<option value="">-- Choose Product --</option>';
@@ -779,7 +780,7 @@
         if (qty > stock)       { showToast(`Only ${stock} units available in stock`, 'error'); return; }
         if (!price || price<=0){ showToast('Enter your offered price per unit', 'error'); return; }
         try {
-            const res  = await fetch('/api/deals/create', {
+            const res  = await fetch(CONFIG.API_BASE_URL + '/api/deals/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify({ wholesalerId: user.role==='wholesaler'?user._id:wholesalerId, retailerId: user.role==='retailer'?user._id:currentUser, productId:productId, quantity:qty, offeredPrice:price, requirementId: document.getElementById('newDealRequirementId').value || null })
@@ -824,7 +825,7 @@
         if (currentRatingVal === 0) { showToast('Please select a star rating', 'error'); return; }
         const reviewText = document.getElementById("reviewText").value;
         try {
-            const res  = await fetch('/api/reviews', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({ wholesalerId:currentRatingWholesalerId, dealId:currentRatingDealId, rating:currentRatingVal, reviewText:reviewText }) });
+            const res  = await fetch(CONFIG.API_BASE_URL + '/api/reviews', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({ wholesalerId:currentRatingWholesalerId, dealId:currentRatingDealId, rating:currentRatingVal, reviewText:reviewText }) });
             const data = await res.json();
             if (data.success) { closeRatingModal(); showToast('Thank you for your review! ⭐', 'success'); }
             else showToast(data.message || 'Could not submit review', 'error');

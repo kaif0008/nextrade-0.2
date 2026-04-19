@@ -20,6 +20,7 @@
       }
     }
   </script>
+  <script src="js/config.js"></script>
   <style>
     /* Nav-link classes referenced by JS-generated innerHTML */
     .nav-link { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; color:#8d99ae; text-decoration:none; font-weight:500; transition:all .3s; border:none; background:none; width:100%; text-align:left; cursor:pointer; font-size:14px; }
@@ -207,7 +208,7 @@
     async function loadMyRequirements() {
       const list = document.getElementById('reqList');
       try {
-        const res  = await fetch('/api/requirements/my', { headers:{ 'Authorization': `Bearer ${token}` } });
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/requirements/my`, { headers:{ 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
           if (data.requirements.length === 0) {
@@ -248,7 +249,7 @@
 
     async function openEditModal(id) {
       try {
-        const res  = await fetch('/api/requirements/my', { headers:{ Authorization:`Bearer ${token}` } });
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/requirements/my`, { headers:{ Authorization:`Bearer ${token}` } });
         const data = await res.json();
         const req  = data.requirements.find(r => r._id === id);
         if (!req) return;
@@ -275,7 +276,7 @@
         description:   document.getElementById('editDesc').value
       };
       try {
-        const res  = await fetch(`/api/requirements/${id}`, { method:'PATCH', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` }, body: JSON.stringify(body) });
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/requirements/${id}`, { method:'PATCH', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` }, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) { closeModal(); loadMyRequirements(); }
         else alert(data.message || 'Update failed');
@@ -285,7 +286,7 @@
     async function deleteReq(id) {
       if (!confirm('Are you sure you want to delete this requirement? This action cannot be undone.')) return;
       try {
-        const res  = await fetch(`/api/requirements/${id}`, { method:'DELETE', headers:{ 'Authorization':`Bearer ${token}` } });
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/requirements/${id}`, { method:'DELETE', headers:{ 'Authorization':`Bearer ${token}` } });
         const data = await res.json();
         if (data.success) loadMyRequirements();
         else alert(data.message || 'Delete failed');

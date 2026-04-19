@@ -20,6 +20,7 @@
       }
     }
   </script>
+  <script src="js/config.js"></script>
   <style>
     /* Classes used by JS-generated deal card HTML */
     .deal-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.05); transition:all .3s; border:1px solid #f1f5f9; }
@@ -177,7 +178,7 @@
 
     async function fetchDeals() {
       try {
-        const res  = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/deals`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) { allDeals = data.deals; renderDeals(); }
       } catch (err) { console.error('Error fetching deals', err); }

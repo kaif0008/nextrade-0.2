@@ -204,6 +204,7 @@
 
   <!-- AI Chatbot -->
   <script src="/chatbot.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
 
   <script>
@@ -255,7 +256,7 @@
       async function loadData() {
         showSkeletons();
         try {
-          const res = await fetch("/api/wholesalers");
+          const res = await fetch(CONFIG.API_BASE_URL + "/api/wholesalers");
           const data = await res.json();
           if(!data.success) throw new Error("Failed");
           state.all = data.wholesalers;

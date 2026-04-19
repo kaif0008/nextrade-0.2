@@ -358,6 +358,7 @@
     </div>
   </main>
 
+  <script src="js/config.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     /* ═══════════════════════════════════════════════════
@@ -432,7 +433,7 @@
 
     async function loadData() {
       try {
-        const aRes = await fetch('/api/analytics/inventory', {headers:{Authorization:`Bearer ${token}`}});
+        const aRes = await fetch(CONFIG.API_BASE_URL + '/api/analytics/inventory', {headers:{Authorization:`Bearer ${token}`}});
         const aData = await aRes.json();
 
         if (aData.success && aData.analytics) {
@@ -491,7 +492,7 @@
         }
 
         try {
-          const dealsRes = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+          const dealsRes = await fetch(CONFIG.API_BASE_URL + '/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
           const dealsData = await dealsRes.json();
           if (dealsData.success) {
             const allDeals = dealsData.deals;
@@ -501,7 +502,7 @@
           }
         } catch (e) { console.error('Error fetching deals', e); }
 
-        const unreadRes = await fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } });
+        const unreadRes = await fetch(CONFIG.API_BASE_URL + '/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } });
         const unreadData = await unreadRes.json();
         const msgBadge = document.getElementById("msgBadge");
         if (unreadData.success && unreadData.count > 0) {
@@ -511,7 +512,7 @@
           msgBadge.style.display = "none";
         }
 
-        const cRes = await fetch('/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
+        const cRes = await fetch(CONFIG.API_BASE_URL + '/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
         const cData = await cRes.json();
         const conversations = cData.conversations || [];
         document.getElementById("statMessages").innerText = conversations.length;
@@ -552,7 +553,7 @@
 
     async function loadDemandInsights() {
       try {
-        const res = await fetch('/api/demand-insights', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/demand-insights', { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         const container = document.getElementById('demandInsightsList');
         if (!data.success || !data.insights || data.insights.length === 0) {
@@ -632,12 +633,12 @@
       setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(), 300); }, 4000);
     }
 
-    const socket = io();
+    const socket = io(CONFIG.API_BASE_URL);
     socket.emit("register", user._id);
     socket.on("receive_message", (data) => {
       if (data.receiverId === user._id) {
         showToast(`New message from ${data.senderName || 'someone'}`, 'info');
-        fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
+        fetch(CONFIG.API_BASE_URL + '/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
           .then(res => res.json())
           .then(d => {
             const badge = document.getElementById("msgBadge");

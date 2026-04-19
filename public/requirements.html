@@ -18,6 +18,7 @@
       }
     }
   </script>
+  <script src="js/config.js"></script>
   <style>
     /* JS-generated card classes */
     .req-card { background:white; border-radius:20px; padding:24px; border:1px solid #f1f5f9; transition:.3s; display:flex; flex-direction:column; position:relative; box-shadow:0 2px 10px rgba(0,0,0,.05); }
@@ -195,7 +196,7 @@
       const sortVal  = document.getElementById('filterSort').value;
       const [sortBy, order] = sortVal.split('-');
 
-      let url = `/api/requirements?sortBy=${sortBy}&order=${order}`;
+      let url = `${CONFIG.API_BASE_URL}/api/requirements?sortBy=${sortBy}&order=${order}`;
       if (search)   url += `&search=${encodeURIComponent(search)}`;
       if (category) url += `&category=${encodeURIComponent(category)}`;
       if (minPrice) url += `&minPrice=${minPrice}`;

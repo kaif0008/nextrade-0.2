@@ -11,6 +11,7 @@
   <script>
     tailwind.config={theme:{extend:{colors:{primary:'#4361ee','primary-dark':'#3f37c9',navy:'#0f172a'},fontFamily:{sans:['Poppins','sans-serif']}}}};
   </script>
+  <script src="js/config.js"></script>
   <!-- Required CSS for JS-generated HTML (product cards, modal, filters, reviews) -->
   <style>
     :root{--primary:#4361ee;--navy:#0f172a;--navy-light:#1e293b;--accent:#f72585;--success:#10b981;--danger:#ef233c;--bg-gray:#f8fafc;--border:#e2e8f0;--text-muted:#64748b;}
@@ -391,7 +392,7 @@
   async function loadData(wsId) {
     showSkeleton();
     try {
-      const res  = await fetch(`/api/products/wholesaler/${wsId}`);
+      const res  = await fetch(`${CONFIG.API_BASE_URL}/api/products/wholesaler/${wsId}`);
       const data = await res.json();
       if (!data.success) throw new Error("Load failed");
       allData = data.products; wholesalerData = data.wholesaler;
@@ -406,7 +407,7 @@
   let allReviews = [], reviewsExpanded = false;
   async function fetchReviews(wsId) {
     try {
-      const res  = await fetch(`/api/wholesalers/${wsId}/rating`);
+      const res  = await fetch(`${CONFIG.API_BASE_URL}/api/wholesalers/${wsId}/rating`);
       const data = await res.json();
       if (data.success) { allReviews = data.reviews || []; document.getElementById("reviewsSection").style.display="block"; renderReviewsSummary(data.averageRating, data.reviewCount); renderReviewsList(); }
     } catch (err) { console.error("Error fetching reviews:", err); }
