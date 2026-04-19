@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog | NexTrade Business Insights</title>
+  <meta name="description" content="Expert insights, market trends, and success stories from the world of B2B commerce.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'#4361ee','primary-dark':'#3f37c9',navy:'#0f172a'},fontFamily:{sans:['Poppins','sans-serif']}}}}</script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-4">
+      <a href="index.html" class="flex items-center gap-2 no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain">
+        <span class="font-bold text-lg text-gray-900 hidden sm:block">Nex<span class="text-primary">Trade</span></span>
+      </a>
+      <nav class="hidden md:flex items-center gap-1">
+        <a href="index.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+        <a href="contact.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+      </nav>
+      <div class="hidden md:flex items-center gap-2">
+        <a href="login.html"     id="loginBtn"     class="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 rounded-xl transition">Login</a>
+        <a href="signup.html"    id="signupBtn"    class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition">Sign Up</a>
+        <a href="dashboard.html" id="dashboardBtn" class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition" style="display:none;">Dashboard</a>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600 hover:text-primary focus:outline-none">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-100">
+      <nav class="flex flex-col gap-1 pt-3">
+        <a href="index.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+        <a href="contact.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+        <div class="flex gap-2 pt-2 border-t border-gray-100 mt-1">
+          <a href="login.html"  id="loginBtnMobile"  class="flex-1 text-center py-2.5 text-sm font-semibold text-primary border border-primary rounded-xl hover:bg-primary/5 transition">Login</a>
+          <a href="signup.html" id="signupBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition">Sign Up</a>
+          <a href="dashboard.html" id="dashboardBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition" style="display:none;">Dashboard</a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<section class="bg-navy text-white py-12 text-center px-4">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-2">NexTrade Blog</h1>
+  <p class="text-slate-400 max-w-xl mx-auto">Expert insights, market trends, and success stories from the world of B2B commerce.</p>
+</section>
+
+<main class="max-w-3xl mx-auto px-4 sm:px-6 py-12 flex flex-col gap-5">
+
+  <!-- Blog post cards -->
+  <article class="bg-white rounded-2xl shadow-sm p-7 hover:shadow-md transition border border-gray-100">
+    <span class="text-primary font-semibold text-xs">April 14, 2026 • Trends</span>
+    <h2 class="text-xl font-bold text-gray-900 mt-2 mb-2">5 Ways AI is Revolutionizing Bulk Procurement</h2>
+    <p class="text-gray-600 text-sm leading-relaxed mb-3">Discover how intelligent systems like Nexa are helping retailers predict demand and wholesalers manage multi-tiered pricing automatically.</p>
+    <a href="#" class="text-primary font-semibold text-sm hover:underline">Read More <i class="fas fa-arrow-right text-xs"></i></a>
+  </article>
+
+  <article class="bg-white rounded-2xl shadow-sm p-7 hover:shadow-md transition border border-gray-100">
+    <span class="text-primary font-semibold text-xs">April 10, 2026 • Case Study</span>
+    <h2 class="text-xl font-bold text-gray-900 mt-2 mb-2">How "Global Tech Wholesalers" Increased Sales by 40%</h2>
+    <p class="text-gray-600 text-sm leading-relaxed mb-3">A deep dive into how shifting from traditional cold-calling to the NexTrade negotiation platform transformed a regional distributor's business.</p>
+    <a href="#" class="text-primary font-semibold text-sm hover:underline">Read More <i class="fas fa-arrow-right text-xs"></i></a>
+  </article>
+
+  <article class="bg-white rounded-2xl shadow-sm p-7 hover:shadow-md transition border border-gray-100">
+    <span class="text-primary font-semibold text-xs">April 02, 2026 • Platform Updates</span>
+    <h2 class="text-xl font-bold text-gray-900 mt-2 mb-2">Introducing Real-Time Inventory Sync</h2>
+    <p class="text-gray-600 text-sm leading-relaxed mb-3">We've launched a new feature that allows wholesalers to sync their offline stock levels with the NexTrade marketplace in real-time.</p>
+    <a href="#" class="text-primary font-semibold text-sm hover:underline">Read More <i class="fas fa-arrow-right text-xs"></i></a>
+  </article>
+
+  <div class="text-center mt-4">
+    <button class="bg-white border border-gray-200 hover:border-primary text-gray-700 hover:text-primary px-6 py-2.5 rounded-xl font-semibold text-sm transition">
+      Load More Posts
+    </button>
+  </div>
+</main>
+
+<footer class="bg-navy text-white pt-12 pb-6 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
+      <div class="col-span-2 sm:col-span-1">
+        <a href="index.html" class="flex items-center gap-2 mb-3 no-underline">
+          <img src="/img/logo.png" alt="NexTrade Logo" class="w-8 h-8 object-contain">
+          <span class="font-bold text-lg">Nex<span class="text-sky-400">Trade</span></span>
+        </a>
+        <p class="text-slate-400 text-sm">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+      </div>
+      <div><h3 class="text-sky-400 font-semibold text-sm mb-4">Company</h3><ul class="flex flex-col gap-2"><li><a href="about.html" class="text-slate-300 hover:text-sky-400 text-sm transition">About Us</a></li><li><a href="careers.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Careers</a></li><li><a href="blog.html" class="text-sky-400 font-semibold text-sm">Blog</a></li></ul></div>
+      <div><h3 class="text-sky-400 font-semibold text-sm mb-4">Resources</h3><ul class="flex flex-col gap-2"><li><a href="help-center.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Help Center</a></li><li><a href="wholesaler-guide.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Wholesaler Guide</a></li><li><a href="shopkeeper-guide.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Shopkeeper Guide</a></li><li><a href="faq.html" class="text-slate-300 hover:text-sky-400 text-sm transition">FAQs</a></li></ul></div>
+      <div><h3 class="text-sky-400 font-semibold text-sm mb-4">Legal</h3><ul class="flex flex-col gap-2"><li><a href="privacy.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Privacy Policy</a></li><li><a href="terms.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Terms of Service</a></li><li><a href="security.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Security</a></li><li><a href="cookie-policy.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Cookie Policy</a></li></ul></div>
+    </div>
+    <div class="border-t border-slate-700 pt-5 text-center text-slate-400 text-sm"><p>© 2026 NexTrade. All rights reserved.</p></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  // Mobile menu toggle
+  document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('hidden');
+  });
+</script>
+<script src="/chatbot.js"></script>
+</body>
+</html>

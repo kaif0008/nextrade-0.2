@@ -1,0 +1,290 @@
+/* ============================================================
+   NexTrade Global CSS
+   Contains ONLY what Tailwind cannot express natively:
+   - Custom keyframe animations
+   - Skeleton loading gradient
+   - Chat bubble directional border tricks
+   - Chatbot widget (dynamically injected by chatbot.js)
+   ============================================================ */
+
+/* ── Fonts ─────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&family=Open+Sans:wght@400;600&display=swap');
+
+/* ── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Poppins', sans-serif; }
+a { text-decoration: none; }
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes loading {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Skeleton Loader ────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+.skeleton-text  { height: 16px; margin-bottom: 8px; width: 100%; }
+.skeleton-text.short { width: 60%; }
+.skeleton-circle { width: 40px; height: 40px; border-radius: 50%; }
+
+/* ── Modal Animations ──────────────────────────────────────── */
+.modal-animate { animation: modalPop 0.3s ease-out; }
+.modal-slide-up { animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
+
+/* ── Float Animation ───────────────────────────────────────── */
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+/* ── GSAP Element Hooks (classes preserved for JS selectors) ─ */
+.gsap-fade, .gsap-fade-up, .gsap-scale, .gsap-slide-left, .gsap-counter { /* hooks only */ }
+
+/* ── Sidebar Transition ────────────────────────────────────── */
+.sidebar {
+  transition: transform 0.3s ease;
+}
+.sidebar.active {
+  transform: translateX(0) !important;
+}
+
+/* ── Stock Distribution Bar ────────────────────────────────── */
+.dist-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #4361ee;
+  transition: width 0.6s ease;
+}
+
+/* ── Chat: WhatsApp-style message bubbles ─────────────────── */
+/* These are created dynamically in JS, so Tailwind cannot reach them */
+.message {
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  word-break: break-word;
+}
+.message.is-me {
+  background: #dcf8c6;
+  border-top-right-radius: 0;
+  color: #111b21;
+}
+.message.is-other {
+  background: #ffffff;
+  border-top-left-radius: 0;
+  color: #111b21;
+}
+.msg-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #667781;
+}
+.tick-icon { font-size: 12px; }
+.tick-icon.read { color: #53bdeb; }
+.system-msg {
+  max-width: 80%;
+  margin: 10px auto;
+  padding: 6px 14px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  text-align: center;
+}
+
+/* ── Deal Card (JS-generated in messages.html) ─────────────── */
+.deal-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  min-width: 250px;
+}
+.deal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+.deal-title { font-weight: 600; font-size: 13px; color: #2b2d42; }
+.deal-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+.status-pending            { background: #fef08a; color: #854d0e; }
+.status-wholesaler_updated { background: #bae6fd; color: #0369a1; }
+.status-wholesaler_accepted { background: #bae6fd; color: #0369a1; }
+.status-confirmed          { background: #bbf7d0; color: #166534; }
+.status-rejected           { background: #fecaca; color: #991b1b; }
+.deal-body { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.deal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.deal-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+  flex: 1;
+  text-align: center;
+}
+.deal-btn.update  { background: #f1f5f9; color: #334155; }
+.deal-btn.update:hover  { background: #e2e8f0; }
+.deal-btn.confirm { background: #4361ee; color: white; }
+.deal-btn.confirm:hover { background: #3f37c9; }
+.deal-btn.cancel  { background: #fef2f2; color: #ef233c; border: 1px solid #fecaca; }
+.deal-btn.cancel:hover  { background: #fee2e2; }
+
+/* ── Contact item active border (JS-rendered contact list) ─── */
+.contact-item.active {
+  border-left: 4px solid #4361ee;
+  background: #f8fafc;
+}
+
+/* ── Status dot online indicator ───────────────────────────── */
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  border: 2px solid white;
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+}
+.status-dot.online { background: #2bc155; }
+
+/* ── Rating Stars ──────────────────────────────────────────── */
+.rating-stars {
+  display: flex;
+  gap: 5px;
+  font-size: 24px;
+  color: #cbd5e1;
+  cursor: pointer;
+  justify-content: center;
+  margin: 15px 0;
+}
+.rating-stars i:hover, .rating-stars i.active { color: #fbbf24; }
+
+/* ── Chatbot Widget (injected by chatbot.js) ───────────────── */
+#nt-chatbot-container {
+  position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+  font-family: 'Poppins', sans-serif;
+}
+#nt-chatbot-toggle {
+  background: #4361ee; color: white; border: none; border-radius: 50%;
+  width: 60px; height: 60px; font-size: 28px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s;
+}
+#nt-chatbot-toggle:hover { transform: scale(1.05); }
+#nt-chatbot-window {
+  display: none; flex-direction: column;
+  width: 350px; height: 450px; background: white; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: absolute;
+  bottom: 80px; right: 0; overflow: hidden; border: 1px solid #e5e7eb;
+}
+#nt-chatbot-header {
+  background: #4361ee; color: white; padding: 15px; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center;
+}
+#nt-chatbot-close {
+  background: transparent; color: white; border: none; font-size: 24px; cursor: pointer;
+}
+#nt-chatbot-messages {
+  flex: 1; padding: 15px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px; background: #f9fafb;
+}
+.nt-msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.4; }
+.nt-msg-user {
+  background: #4361ee; color: white; align-self: flex-end; border-bottom-right-radius: 2px;
+}
+.nt-msg-ai {
+  background: #e5e7eb; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 2px;
+}
+#nt-chatbot-input-area {
+  display: flex; padding: 10px; border-top: 1px solid #e5e7eb; background: white;
+}
+#nt-chatbot-input {
+  flex: 1; padding: 10px; border: 1px solid #d1d5db;
+  border-radius: 20px; outline: none; font-size: 14px; font-family: 'Poppins', sans-serif;
+}
+#nt-chatbot-send {
+  background: #4361ee; color: white; border: none; width: 40px; height: 40px;
+  border-radius: 50%; margin-left: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.nt-typing { font-style: italic; color: #6b7280; font-size: 12px; }
+
+/* ── Nav underline hover trick (index.html nav links) ──────── */
+nav a.active::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: #f72585;
+  bottom: -5px;
+  left: 0;
+}
+
+/* ── Toast container (messages.html JS-generated) ─────────── */
+#toastContainer {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+/* ── Scrollbar styling ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Utility overrides for Tailwind gaps ─────────────────────- */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+}

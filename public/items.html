@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products | NexTrade</title>
+  <meta name="description" content="Browse products from this wholesaler on NexTrade.">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={theme:{extend:{colors:{primary:'#4361ee','primary-dark':'#3f37c9',navy:'#0f172a'},fontFamily:{sans:['Poppins','sans-serif']}}}};
+  </script>
+  <!-- Required CSS for JS-generated HTML (product cards, modal, filters, reviews) -->
+  <style>
+    :root{--primary:#4361ee;--navy:#0f172a;--navy-light:#1e293b;--accent:#f72585;--success:#10b981;--danger:#ef233c;--bg-gray:#f8fafc;--border:#e2e8f0;--text-muted:#64748b;}
+    /* Skeleton loader */
+    .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    /* Filters bar */
+    .filters-bar{background:white;border-bottom:1px solid var(--border);position:sticky;top:70px;z-index:100;padding:14px 20px;box-shadow:0 2px 5px rgba(0,0,0,.02);}
+    .fb-container{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+    .search-box{position:relative;flex:1;min-width:180px;}
+    .search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);}
+    .search-input{width:100%;padding:10px 10px 10px 35px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;font-family:'Poppins',sans-serif;}
+    .search-input:focus{border-color:var(--primary);}
+    .cat-chips{display:flex;gap:7px;flex:2;min-width:220px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+    .cat-chips::-webkit-scrollbar{height:3px;}
+    .chip{padding:6px 14px;background:var(--bg-gray);border:1px solid transparent;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;color:var(--text-muted);transition:.2s;font-family:'Poppins',sans-serif;}
+    .chip:hover{background:#e2e8f0;}
+    .chip.active{background:var(--primary);color:white;border-color:var(--primary);}
+    /* Price range slider */
+    .price-filter{display:flex;flex-direction:column;width:160px;}
+    .price-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;display:flex;justify-content:space-between;}
+    .range-wrap{position:relative;height:16px;}
+    .range-wrap input[type="range"]{position:absolute;width:100%;top:0;appearance:none;pointer-events:none;background:transparent;z-index:2;height:100%;margin:0;}
+    .range-wrap input[type="range"]::-webkit-slider-thumb{pointer-events:auto;appearance:none;width:14px;height:14px;background:var(--primary);border-radius:50%;cursor:pointer;}
+    .range-track{position:absolute;width:100%;height:4px;background:var(--border);top:6px;border-radius:2px;z-index:1;}
+    .action-controls{display:flex;gap:10px;align-items:center;}
+    select.sort-drop{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;color:#334155;font-family:'Poppins',sans-serif;}
+    .saved-pill{padding:8px 14px;background:#fff0f3;color:var(--accent);border:1px solid #ffccd5;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:.2s;font-family:'Poppins',sans-serif;}
+    .saved-pill:hover{background:#ffe3e8;}
+    .saved-pill.active{background:var(--accent);color:white;border-color:var(--accent);}
+    .result-count{width:100%;font-size:12px;color:var(--text-muted);margin-top:4px;}
+    /* Product grid */
+    .grid-container{max-width:1200px;margin:28px auto 60px;padding:0 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+    @media(max-width:1024px){.grid-container{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:768px){.grid-container{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:480px){.grid-container{grid-template-columns:1fr;}}
+    /* Product card */
+    .p-card{background:white;border:.5px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:.3s;position:relative;}
+    .p-card:hover{transform:translateY(-3px);border-color:#cbd5e1;}
+    .p-img-area{position:relative;height:200px;background:#e0e7ff;display:flex;align-items:center;justify-content:center;}
+    .p-img{width:100%;height:100%;object-fit:cover;}
+    .p-fallback{font-size:48px;color:rgba(67,97,238,.4);font-family:'Syne',sans-serif;font-weight:700;}
+    .cat-badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);color:white;padding:4px 10px;border-radius:12px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;z-index:2;backdrop-filter:blur(4px);}
+    .wish-btn{background:#f1f5f9;color:var(--text-muted);border:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;}
+    .wish-btn:hover{transform:scale(1.1);}
+    .wish-btn.saved{color:var(--accent);}
+    .quick-view-overlay{position:absolute;inset:0;background:rgba(15,23,42,.4);display:flex;justify-content:center;align-items:center;opacity:0;transition:.2s;z-index:3;backdrop-filter:blur(2px);}
+    .p-card:hover .quick-view-overlay{opacity:1;}
+    .quick-view-btn{background:white;border:none;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:var(--navy);transform:translateY(10px);transition:.2s;font-family:'Poppins',sans-serif;}
+    .p-card:hover .quick-view-btn{transform:translateY(0);}
+    .oos-overlay{position:absolute;inset:0;background:rgba(255,255,255,.7);z-index:4;display:flex;justify-content:center;align-items:center;}
+    .oos-label{background:var(--danger);color:white;padding:6px 12px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:4px;box-shadow:0 2px 5px rgba(239,35,60,.3);transform:rotate(-5deg);}
+    .p-body{padding:14px;flex:1;display:flex;flex-direction:column;}
+    .p-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--navy);margin:0 0 5px;line-height:1.3;}
+    .hl{background:rgba(252,163,17,.4);padding:0 2px;border-radius:2px;}
+    .p-desc{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .p-price{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+    .p-meta{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--text-muted);margin-bottom:14px;}
+    .p-meta div{display:flex;align-items:center;gap:6px;}
+    .dot{width:6px;height:6px;border-radius:50%;}
+    .dot.green{background:var(--success);}
+    .dot.red{background:var(--danger);}
+    .p-footer{padding:12px 0 0;border-top:1px solid var(--border);margin-top:auto;}
+    .inq-btn{display:block;text-align:center;background:var(--navy);color:white;text-decoration:none;padding:10px;border-radius:6px;font-size:13px;font-weight:600;transition:.2s;font-family:'Poppins',sans-serif;}
+    .inq-btn:hover{background:var(--primary);}
+    .p-card.oos .inq-btn{background:#cbd5e1;color:#94a3b8;pointer-events:none;}
+    /* Empty / Error states */
+    .empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);}
+    .empty-state i{font-size:48px;color:#cbd5e1;margin-bottom:15px;display:block;}
+    .empty-state h3{color:var(--navy);font-size:18px;margin-bottom:5px;}
+    .empty-state p{font-size:14px;margin-bottom:20px;}
+    .btn-clear{background:var(--navy-light);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-family:'Poppins',sans-serif;}
+    /* Wholesaler profile band */
+    .wholesaler-band{background:white;padding:28px 20px;border-bottom:2px solid #f1f5f9;}
+    .wb-container{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:22px;}
+    .wb-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;}
+    .wb-left{display:flex;align-items:center;gap:18px;}
+    .back-link{color:#2e333a;text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;margin-bottom:8px;transition:.2s;}
+    .back-link:hover{color:var(--primary);}
+    .wb-avatar{width:60px;height:60px;border-radius:12px;background:#213ae0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;}
+    .wb-biz{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin:0 0 5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .verified-icon{color:var(--success);font-size:16px;}
+    .wb-info{font-size:13px;color:#4076c1;display:flex;gap:14px;flex-wrap:wrap;}
+    .prod-count-pill{background:#f1f5f9;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:1px solid #e2e8f0;}
+    /* Gallery */
+    .wb-gallery{display:flex;gap:14px;overflow-x:auto;padding-bottom:14px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;}
+    .wb-gallery-item{flex:0 0 200px;height:140px;border-radius:10px;overflow:hidden;cursor:pointer;transition:.3s;border:1px solid #f1f5f9;}
+    .wb-gallery-item:hover{transform:translateY(-5px);box-shadow:0 10px 15px -3px rgba(0,0,0,.1);}
+    .wb-gallery-item img{width:100%;height:100%;object-fit:cover;}
+    /* Quick View Modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);opacity:0;transition:.3s;}
+    .modal-overlay.active{display:flex;opacity:1;}
+    .modal-content{background:white;border-radius:16px;width:90%;max-width:800px;max-height:90vh;overflow:hidden;display:flex;position:relative;transform:translateY(20px);transition:.3s;}
+    .modal-overlay.active .modal-content{transform:translateY(0);}
+    @media(max-width:768px){.modal-content{flex-direction:column;overflow-y:auto;}}
+    .m-close{position:absolute;top:14px;right:14px;font-size:20px;color:var(--text-muted);background:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,.1);}
+    .m-img-area{width:45%;background:var(--bg-gray);position:relative;}
+    @media(max-width:768px){.m-img-area{width:100%;height:250px;}}
+    .m-img{width:100%;height:100%;object-fit:cover;}
+    .m-details{padding:28px;flex:1;display:flex;flex-direction:column;}
+    .m-cat{display:inline-block;padding:4px 10px;background:#e0e7ff;color:var(--primary);font-size:11px;font-weight:600;text-transform:uppercase;border-radius:12px;margin-bottom:12px;width:max-content;}
+    .m-title{font-family:'Syne',sans-serif;font-size:22px;color:var(--navy);margin:0 0 10px;line-height:1.2;}
+    .m-price{font-size:26px;font-weight:700;color:var(--navy);margin-bottom:18px;}
+    .m-desc{font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:18px;}
+    .m-meta-box{background:var(--bg-gray);padding:14px;border-radius:8px;margin-bottom:22px;font-size:13px;color:var(--text-muted);display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .m-meta-box strong{color:var(--navy);}
+    .m-actions{display:flex;gap:12px;margin-top:auto;flex-wrap:wrap;}
+    .m-btn{flex:1;padding:12px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;text-decoration:none;cursor:pointer;min-width:130px;transition:.2s;font-family:'Poppins',sans-serif;}
+    .btn-inq{background:var(--navy);color:white;border:none;}
+    .btn-inq:hover{background:var(--primary);}
+    .btn-wa{background:transparent;color:#16a34a;border:1px solid #16a34a;}
+    .btn-wa:hover{background:#dcfce3;}
+    /* Reviews Section */
+    .reviews-section{max-width:1200px;margin:40px auto 80px;padding:0 20px;}
+    .reviews-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid #e2e8f0;}
+    .reviews-header h2{font-family:'Syne',sans-serif;font-size:22px;color:var(--navy);margin:0;}
+    .reviews-summary{display:flex;align-items:center;gap:18px;background:white;padding:22px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:26px;}
+    .avg-number{font-size:48px;font-weight:700;color:var(--navy);line-height:1;}
+    .avg-stars-container{display:flex;flex-direction:column;gap:4px;}
+    .stars-row{color:#fbbf24;font-size:18px;letter-spacing:2px;}
+    .total-reviews-count{font-size:13px;color:var(--text-muted);}
+    .reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;}
+    .review-card{background:white;padding:18px;border-radius:12px;border:1px solid var(--border);transition:.3s;}
+    .review-card:hover{box-shadow:0 5px 15px rgba(0,0,0,.08);border-color:#4895ef;}
+    .rv-top{display:flex;justify-content:space-between;margin-bottom:10px;}
+    .rv-author{font-weight:600;font-size:14px;color:var(--navy);}
+    .rv-date{font-size:11px;color:var(--text-muted);}
+    .rv-stars{color:#fbbf24;font-size:12px;margin-bottom:8px;}
+    .rv-text{font-size:13px;color:#475569;line-height:1.6;font-style:italic;}
+    .verified-deal-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--success);font-weight:600;background:#ecfdf5;padding:2px 8px;border-radius:10px;margin-top:8px;}
+    .show-more-btn{display:block;margin:26px auto 0;padding:10px 24px;background:white;border:1px solid var(--primary);color:var(--primary);border-radius:25px;font-size:13px;font-weight:600;cursor:pointer;transition:.3s;font-family:'Poppins',sans-serif;}
+    .show-more-btn:hover{background:var(--primary);color:white;}
+    .no-reviews{text-align:center;padding:40px;background:white;border-radius:12px;color:var(--text-muted);border:1px dashed #cbd5e1;}
+    @media(max-width:640px){.reviews-grid{grid-template-columns:1fr;}.reviews-summary{flex-direction:column;text-align:center;}}
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-4">
+      <a href="index.html" class="flex items-center gap-2 no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain">
+        <span class="font-bold text-lg text-gray-900 hidden sm:block">Nex<span class="text-primary">Trade</span></span>
+      </a>
+      <nav class="hidden md:flex items-center gap-1">
+        <a href="index.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+        <a href="contact.html" class="px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+      </nav>
+      <div class="hidden md:flex items-center gap-2">
+        <a href="login.html"     id="loginBtn"     class="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 rounded-xl transition">Login</a>
+        <a href="signup.html"    id="signupBtn"    class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition">Sign Up</a>
+        <a href="dashboard.html" id="dashboardBtn" class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition" style="display:none;">Dashboard</a>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600 hover:text-primary focus:outline-none">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-100">
+      <nav class="flex flex-col gap-1 pt-3">
+        <a href="index.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+        <a href="contact.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+        <div class="flex gap-2 pt-2 border-t border-gray-100 mt-1">
+          <a href="login.html"  id="loginBtnMobile"  class="flex-1 text-center py-2.5 text-sm font-semibold text-primary border border-primary rounded-xl hover:bg-primary/5 transition">Login</a>
+          <a href="signup.html" id="signupBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition">Sign Up</a>
+          <a href="dashboard.html" id="dashboardBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition" style="display:none;">Dashboard</a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- WHOLESALER PROFILE BAND -->
+<div class="wholesaler-band">
+  <div class="wb-container">
+    <div class="wb-top">
+      <div class="wb-left">
+        <div class="wb-avatar" id="wbAvatar"><div class="skeleton" style="width:100%;height:100%;border-radius:12px;"></div></div>
+        <div>
+          <a href="wholesalers.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Wholesalers</a>
+          <h1 class="wb-biz" id="wbBiz"><div class="skeleton" style="height:24px;width:200px;display:inline-block;"></div></h1>
+          <div class="wb-info">
+            <span id="wbOwner">Loading...</span>
+            <span id="wbCity"><i class="fas fa-map-marker-alt"></i> ...</span>
+          </div>
+        </div>
+      </div>
+      <div><div class="prod-count-pill" id="totalCountPill">- Products</div></div>
+    </div>
+    <!-- Business Gallery (JS renders here) -->
+    <div class="wb-gallery" id="wbGallery" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- FILTERS BAR -->
+<div class="filters-bar">
+  <div class="fb-container">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search products...">
+    </div>
+    <div class="cat-chips" id="catChips">
+      <button class="chip active" data-val="">All</button>
+    </div>
+    <div class="price-filter">
+      <div class="price-label">
+        <span>Price</span>
+        <span id="priceLabelDisplay">₹0 – ₹Max</span>
+      </div>
+      <div class="range-wrap">
+        <div class="range-track" id="rangeTrack"></div>
+        <input type="range" id="priceMin" min="0" max="10000" value="0">
+        <input type="range" id="priceMax" min="0" max="10000" value="10000">
+      </div>
+    </div>
+    <div class="action-controls">
+      <button class="saved-pill" id="wishlistToggleBtn">♥ <span id="wishCount">0</span> Saved</button>
+      <select class="sort-drop" id="sortSelect">
+        <option value="default">Default</option>
+        <option value="price_asc">Price: Low to High</option>
+        <option value="price_desc">Price: High to Low</option>
+        <option value="newest">Newest</option>
+      </select>
+    </div>
+    <div class="result-count" id="resultCountTxt">Showing 0 products</div>
+  </div>
+</div>
+
+<!-- PRODUCT GRID (JS renders here) -->
+<div class="grid-container" id="gridContainer"></div>
+
+<!-- REVIEWS SECTION (JS shows/hides) -->
+<section class="reviews-section" id="reviewsSection" style="display:none;">
+  <div class="reviews-header"><h2>Reviews & Ratings</h2></div>
+  <div id="reviewsSummaryContainer"></div>
+  <div id="reviewsList" class="reviews-grid"></div>
+  <button id="showAllReviewsBtn" class="show-more-btn" style="display:none;" onclick="toggleAllReviews()">View All Reviews</button>
+</section>
+
+<!-- QUICK VIEW MODAL -->
+<div class="modal-overlay" id="quickViewModal">
+  <div class="modal-content" id="modalContentNode">
+    <button class="m-close" onclick="closeModal()">&times;</button>
+    <div class="m-img-area">
+      <img id="mImg" src="" class="m-img" alt="Product">
+      <div class="oos-overlay" id="mOosOverlay" style="display:none;"><div class="oos-label">Out of Stock</div></div>
+    </div>
+    <div class="m-details">
+      <div class="m-cat" id="mCat">Category</div>
+      <h2 class="m-title" id="mName">Product Name</h2>
+      <div class="m-price" id="mPrice">₹0</div>
+      <div class="m-desc" id="mDesc">Product description goes here...</div>
+      <div class="m-meta-box">
+        <div><i class="fas fa-box" style="color:#94a3b8;width:16px;"></i> Min Order: <strong id="mMoq">1</strong></div>
+        <div><i class="fas fa-cubes" style="color:#94a3b8;width:16px;"></i> Stock: <strong id="mStock">0</strong></div>
+      </div>
+      <div class="m-actions">
+        <a href="#" id="mInqBtn" class="m-btn btn-inq">Send Inquiry</a>
+        <a href="#" id="mWaBtn" target="_blank" class="m-btn btn-wa"><i class="fab fa-whatsapp"></i> Chat on WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-navy text-white pt-12 pb-6 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
+      <div class="col-span-2 sm:col-span-1">
+        <div class="flex items-center gap-2 mb-3">
+          <img src="/img/logo.png" alt="NexTrade Logo" class="w-8 h-8 object-contain">
+          <div class="font-bold text-xl">Nex<span class="text-primary">Trade</span></div>
+        </div>
+        <p class="text-slate-400 text-sm">Connecting shopkeepers with trusted verified wholesalers across India seamlessly.</p>
+      </div>
+      <div><h3 class="text-sky-400 font-semibold text-sm mb-4">Company</h3><ul class="flex flex-col gap-2"><li><a href="about.html" class="text-slate-300 hover:text-sky-400 text-sm transition">About Us</a></li><li><a href="careers.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Careers</a></li><li><a href="contact.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Contact</a></li></ul></div>
+      <div><h3 class="text-sky-400 font-semibold text-sm mb-4">Resources</h3><ul class="flex flex-col gap-2"><li><a href="help-center.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Help Center</a></li><li><a href="wholesaler-guide.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Wholesaler Guide</a></li><li><a href="faq.html" class="text-slate-300 hover:text-sky-400 text-sm transition">FAQs</a></li></ul></div>
+      <div><h3 class="text-sky-400 font-semibold text-sm mb-4">Legal</h3><ul class="flex flex-col gap-2"><li><a href="privacy.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Privacy Policy</a></li><li><a href="terms.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Terms of Service</a></li></ul></div>
+    </div>
+    <div class="border-t border-slate-700 pt-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-slate-400 text-sm">
+      <span>© 2026 NexTrade. All rights reserved.</span>
+      <div class="flex gap-3">
+        <a href="#" class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition text-white text-xs"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition text-white text-xs"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition text-white text-xs"><i class="fab fa-instagram"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  // System Init
+  document.addEventListener("DOMContentLoaded", () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user && user.role === 'wholesaler') { 
+      location.href = 'wholesaler-dashboard.html'; 
+      return; 
+    }
+    
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const wholesalerId = params.get("id");
+    if (!wholesalerId) { alert("Invalid wholesaler"); window.location.href = "wholesalers.html"; return; }
+    loadData(wholesalerId);
+  });
+
+  let allData = [], wholesalerData = null, filteredData = [], maxPriceDetected = 5000;
+  const fState = { search:"", category:"", minP:0, maxP:5000, sort:"default", showWishlistOnly:false };
+
+  let wishlist = JSON.parse(localStorage.getItem("nt_wishlist")) || [];
+  const wishCountSpan = document.getElementById("wishCount");
+  function saveWishlist() { localStorage.setItem("nt_wishlist", JSON.stringify(wishlist)); wishCountSpan.innerText = wishlist.length; }
+  saveWishlist();
+
+  window.toggleWishlist = function(e, id) {
+    e.stopPropagation();
+    if (wishlist.includes(id)) wishlist = wishlist.filter(x => x !== id); else wishlist.push(id);
+    saveWishlist(); renderGrid();
+    if (fState.showWishlistOnly) applyFilters();
+  };
+
+  document.getElementById("wishlistToggleBtn").addEventListener("click", function() {
+    fState.showWishlistOnly = !fState.showWishlistOnly;
+    this.classList.toggle("active", fState.showWishlistOnly);
+    applyFilters();
+  });
+
+  const formatINR = (num) => "₹" + Number(num || 0).toLocaleString('en-IN');
+  function highlightText(text, term) {
+    if (!term) return text;
+    return text.replace(new RegExp(`(${term})`, 'gi'), '<span class="hl">$1</span>');
+  }
+
+  const modal = document.getElementById("quickViewModal");
+  window.openModal = function(id) {
+    const p = allData.find(x => x._id === id);
+    if (!p) return;
+    document.getElementById("mImg").src   = p.image || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&q=80';
+    document.getElementById("mOosOverlay").style.display = p.stock === 0 ? "flex" : "none";
+    document.getElementById("mCat").innerText   = p.category || "General";
+    document.getElementById("mName").innerText  = p.name;
+    document.getElementById("mPrice").innerText = formatINR(p.pricePerUnit || p.price);
+    document.getElementById("mDesc").innerText  = p.description || "No description available.";
+    document.getElementById("mMoq").innerText   = (p.moq || 1) + " " + (p.unit || 'units');
+    document.getElementById("mStock").innerText = p.stock || 0;
+    const inqBtn = document.getElementById("mInqBtn");
+    if (p.stock === 0) {
+      inqBtn.href = "#"; inqBtn.style.background = "#cbd5e1"; inqBtn.style.pointerEvents = "none";
+      inqBtn.innerText = "Unavailable"; inqBtn.onclick = (e) => e.preventDefault();
+    } else {
+      inqBtn.href = "#"; inqBtn.style.background = "var(--navy)"; inqBtn.style.pointerEvents = "auto";
+      inqBtn.innerText = "Send Inquiry";
+      inqBtn.onclick = (e) => attemptInquire(e, p.wholesalerId, p._id, p.name, p.pricePerUnit || p.price, p.moq || 1, p.stock || 0);
+    }
+    modal.classList.add("active");
+  };
+  window.closeModal = function() { modal.classList.remove("active"); };
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  function showSkeleton() {
+    const grid = document.getElementById("gridContainer");
+    grid.innerHTML = "";
+    for (let i = 0; i < 8; i++) {
+      grid.innerHTML += `<div class="p-card"><div class="skeleton" style="height:200px;width:100%;"></div><div class="p-body"><div class="skeleton" style="height:20px;width:80%;margin-bottom:10px;"></div><div class="skeleton" style="height:14px;width:100%;margin-bottom:5px;"></div><div class="skeleton" style="height:14px;width:60%;margin-bottom:15px;"></div><div class="skeleton" style="height:24px;width:40%;margin-bottom:15px;"></div><div style="display:flex;gap:10px;margin-top:auto;"><div class="skeleton" style="height:36px;flex:1;border-radius:6px;"></div></div></div></div>`;
+    }
+  }
+
+  async function loadData(wsId) {
+    showSkeleton();
+    try {
+      const res  = await fetch(`/api/products/wholesaler/${wsId}`);
+      const data = await res.json();
+      if (!data.success) throw new Error("Load failed");
+      allData = data.products; wholesalerData = data.wholesaler;
+      setupWholesalerBand(); setupFiltersDOM(); fetchReviews(wsId);
+      if (allData.length > 0) maxPriceDetected = Math.max(...allData.map(p => p.pricePerUnit || p.price || 0));
+      setupSliders(); applyFilters();
+    } catch (e) {
+      document.getElementById("gridContainer").innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error loading products</h3><p>Please try refreshing the page.</p></div>`;
+    }
+  }
+
+  let allReviews = [], reviewsExpanded = false;
+  async function fetchReviews(wsId) {
+    try {
+      const res  = await fetch(`/api/wholesalers/${wsId}/rating`);
+      const data = await res.json();
+      if (data.success) { allReviews = data.reviews || []; document.getElementById("reviewsSection").style.display="block"; renderReviewsSummary(data.averageRating, data.reviewCount); renderReviewsList(); }
+    } catch (err) { console.error("Error fetching reviews:", err); }
+  }
+
+  function renderReviewsSummary(avg, count) {
+    const container = document.getElementById("reviewsSummaryContainer");
+    if (count === 0) { container.innerHTML = `<div class="no-reviews"><i class="far fa-comment-dots" style="font-size:24px;margin-bottom:10px;display:block;"></i>No reviews yet for this wholesaler.</div>`; document.getElementById("reviewsList").style.display="none"; return; }
+    container.innerHTML = `<div class="reviews-summary"><div class="avg-number">${avg.toFixed(1)}</div><div class="avg-stars-container"><div class="stars-row">${generateStars(avg)}</div><div class="total-reviews-count">Based on ${count} verified deal${count > 1 ? 's' : ''}</div></div></div>`;
+  }
+
+  function renderReviewsList() {
+    const list = document.getElementById("reviewsList");
+    const btn  = document.getElementById("showAllReviewsBtn");
+    list.innerHTML = "";
+    if (allReviews.length === 0) return;
+    list.style.display = "grid";
+    allReviews.slice(0, reviewsExpanded ? allReviews.length : 3).forEach(rv => {
+      const name = rv.retailerId ? (rv.retailerId.businessName || rv.retailerId.name) : "Verified Retailer";
+      const date = new Date(rv.createdAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+      list.innerHTML += `<div class="review-card"><div class="rv-top"><span class="rv-author">${name}</span><span class="rv-date">${date}</span></div><div class="rv-stars">${generateStars(rv.rating)}</div><div class="rv-text">"${rv.reviewText || 'No comment provided.'}"</div><div class="verified-deal-badge"><i class="fas fa-check-double"></i> Verified Deal</div></div>`;
+    });
+    if (allReviews.length > 3) { btn.style.display="block"; btn.innerText = reviewsExpanded ? "Show Less" : `View All ${allReviews.length} Reviews`; } else btn.style.display="none";
+  }
+
+  window.toggleAllReviews = function() { reviewsExpanded = !reviewsExpanded; renderReviewsList(); };
+
+  function generateStars(rating) {
+    const full = Math.floor(rating), half = rating % 1 >= 0.5;
+    let html = "";
+    for (let i = 1; i <= 5; i++) {
+      if (i <= full) html += '<i class="fas fa-star"></i>';
+      else if (i === full + 1 && half) html += '<i class="fas fa-star-half-alt"></i>';
+      else html += '<i class="far fa-star"></i>';
+    }
+    return html;
+  }
+
+  function setupWholesalerBand() {
+    if (!wholesalerData) return;
+    const bName   = wholesalerData.businessName || wholesalerData.name;
+    const initial = bName.charAt(0).toUpperCase();
+    const vHtml   = (wholesalerData.gstNumber && wholesalerData.mobileNumber) ? '<i class="fas fa-check-circle verified-icon" title="Verified"></i>' : '';
+    const gallery = document.getElementById("wbGallery");
+    const photos  = wholesalerData.businessPhotos || [];
+    if (photos.length > 0) { gallery.style.display="flex"; gallery.innerHTML = photos.map(src => `<div class="wb-gallery-item" onclick="viewPhoto('${src}')"><img src="${src}" alt="Business Photo"></div>`).join(''); }
+    else if (wholesalerData.businessPhotoUrl) { gallery.style.display="flex"; gallery.innerHTML = `<div class="wb-gallery-item" onclick="viewPhoto('${wholesalerData.businessPhotoUrl}')"><img src="${wholesalerData.businessPhotoUrl}" alt="Business Photo"></div>`; }
+    else gallery.style.display="none";
+    const ratingHtml = wholesalerData.averageRating > 0 ? `<span style="font-size:14px;margin-left:10px;color:#fbbf24;background:rgba(0,0,0,0.07);padding:4px 10px;border-radius:12px;display:inline-flex;align-items:center;gap:5px;vertical-align:middle;"><i class="fas fa-star"></i> ${wholesalerData.averageRating.toFixed(1)} (${wholesalerData.reviewCount} Reviews)</span>` : '';
+    document.getElementById("wbAvatar").innerText          = initial;
+    document.getElementById("wbBiz").innerHTML             = `${bName} ${vHtml} ${ratingHtml}`;
+    document.getElementById("wbOwner").innerText           = wholesalerData.name;
+    document.getElementById("wbCity").innerHTML            = `<i class="fas fa-map-marker-alt"></i> ${wholesalerData.shopAddress || wholesalerData.city || 'India'}`;
+    document.getElementById("totalCountPill").innerText    = `${allData.length} Products`;
+    document.title = `${bName} Products | NexTrade`;
+  }
+
+  window.viewPhoto = function(src) { window.open(src, '_blank'); };
+
+  function setupFiltersDOM() {
+    const catContainer = document.getElementById("catChips");
+    [...new Set(allData.map(x => x.category).filter(Boolean))].forEach(c => {
+      const btn = document.createElement("button");
+      btn.className = "chip"; btn.dataset.val = c; btn.innerText = c;
+      btn.onclick = function() { document.querySelectorAll(".chip").forEach(x => x.classList.remove("active")); this.classList.add("active"); fState.category = c; applyFilters(); };
+      catContainer.appendChild(btn);
+    });
+    catContainer.firstElementChild.onclick = function() { document.querySelectorAll(".chip").forEach(x => x.classList.remove("active")); this.classList.add("active"); fState.category = ""; applyFilters(); };
+    document.getElementById("searchInput").addEventListener("input", (e) => { fState.search = e.target.value.toLowerCase(); applyFilters(); });
+    document.getElementById("sortSelect").addEventListener("change", (e) => { fState.sort = e.target.value; applyFilters(); });
+  }
+
+  function setupSliders() {
+    const minInput = document.getElementById("priceMin"), maxInput = document.getElementById("priceMax");
+    const track = document.getElementById("rangeTrack"), label = document.getElementById("priceLabelDisplay");
+    minInput.max = maxInput.max = maxPriceDetected; maxInput.value = maxPriceDetected;
+    fState.minP = 0; fState.maxP = maxPriceDetected;
+    function updateUI() {
+      let minV = parseInt(minInput.value), maxV = parseInt(maxInput.value);
+      if (minV > maxV) [minV, maxV] = [maxV, minV];
+      label.innerText = `${formatINR(minV)} – ${formatINR(maxV)}`;
+      const pctMin = (minV/maxPriceDetected)*100, pctMax = (maxV/maxPriceDetected)*100;
+      track.style.left = pctMin+"%"; track.style.width = (pctMax-pctMin)+"%";
+      fState.minP = minV; fState.maxP = maxV; applyFilters();
+    }
+    minInput.addEventListener("input", updateUI); maxInput.addEventListener("input", updateUI); updateUI();
+  }
+
+  window.clearAllFilters = function() {
+    fState.search = ""; fState.category = ""; fState.minP = 0; fState.maxP = maxPriceDetected; fState.showWishlistOnly = false;
+    document.getElementById("searchInput").value = "";
+    document.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+    document.querySelector(".chip[data-val='']").classList.add("active");
+    document.getElementById("priceMin").value = 0; document.getElementById("priceMax").value = maxPriceDetected;
+    document.getElementById("wishlistToggleBtn").classList.remove("active");
+    document.getElementById("priceMin").dispatchEvent(new Event('input')); applyFilters();
+  };
+
+  function applyFilters() {
+    filteredData = allData.filter(p => {
+      const price = p.pricePerUnit || p.price || 0;
+      return (!fState.search || p.name.toLowerCase().includes(fState.search) || (p.description && p.description.toLowerCase().includes(fState.search)))
+          && (!fState.category || p.category === fState.category)
+          && price >= fState.minP && price <= fState.maxP
+          && (fState.showWishlistOnly ? wishlist.includes(p._id) : true);
+    });
+    if (fState.sort==="price_asc")  filteredData.sort((a,b) => (a.pricePerUnit||a.price||0)-(b.pricePerUnit||b.price||0));
+    if (fState.sort==="price_desc") filteredData.sort((a,b) => (b.pricePerUnit||b.price||0)-(a.pricePerUnit||a.price||0));
+    if (fState.sort==="newest")     filteredData.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt));
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById("gridContainer");
+    document.getElementById("resultCountTxt").innerText = `Showing ${filteredData.length} of ${allData.length} products`;
+    if (filteredData.length === 0) { grid.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h3>No products found</h3><p>Try adjusting your search or filters.</p><button class="btn-clear" onclick="clearAllFilters()">Clear Filters</button></div>`; return; }
+    grid.innerHTML = filteredData.map(p => {
+      const isWished = wishlist.includes(p._id);
+      const hlName   = highlightText(p.name, fState.search);
+      const priceStr = formatINR(p.pricePerUnit || p.price);
+      const isOos    = p.stock === 0;
+      let imgHtml = p.image ? `<img src="${p.image}" class="p-img" alt="${p.name}">` : `<div class="p-fallback">${(p.category||'P').charAt(0).toUpperCase()}</div>`;
+      return `<div class="p-card ${isOos?'oos':''}">
+        <div class="p-img-area"><div class="cat-badge">${p.category||'General'}</div>${imgHtml}${isOos?'<div class="oos-overlay"><div class="oos-label">Out of Stock</div></div>':''}<div class="quick-view-overlay"><button class="quick-view-btn" onclick="openModal('${p._id}')">Quick View</button></div></div>
+        <div class="p-body">
+          <h3 class="p-name">${hlName}</h3>
+          <div class="p-desc">${p.description||''}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div class="p-price" style="margin-bottom:0;">${priceStr} <span style="font-size:12px;color:#94a3b8;font-weight:400;">/ ${p.unit||'unit'}</span></div>
+            <button class="${isWished?'wish-btn saved':'wish-btn'}" onclick="toggleWishlist(event,'${p._id}')" title="Save"><i class="${isWished?'fas':'far'} fa-heart"></i></button>
+          </div>
+          <div class="p-meta"><div><i class="fas fa-box"></i> Min Order: ${p.moq||1} ${p.unit||'units'}</div><div><span class="dot ${p.stock>0?'green':'red'}"></span> ${p.stock>0?`In Stock (${p.stock})`:'Out of Stock'}</div></div>
+          <div class="p-footer"><a href="#" class="${isOos?'inq-btn disabled':'inq-btn'}" onclick="attemptInquire(event,'${p.wholesalerId}','${p._id}','${p.name}',${p.pricePerUnit||p.price},${p.moq||1},${p.stock||0});return false;">${isOos?'Unavailable':'Send Inquiry'}</a></div>
+        </div></div>`;
+    }).join('');
+  }
+
+  function attemptInquire(e, wsId, pId, pName, price, moq, stock) {
+    e.preventDefault();
+    const u = JSON.parse(localStorage.getItem('user'));
+    if (!u) { window.location.href='login.html'; return; }
+    if (u.role === 'wholesaler') { alert('Wholesalers cannot send inquiries.'); return; }
+    if (!u.emailVerified) { alert('Email verification required to send inquiries. Please verify your email from your Profile page.'); return; }
+    if (e.currentTarget.classList.contains('disabled')) return;
+    window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${encodeURIComponent(pName)}&price=${price}&moq=${moq}&stock=${stock}`;
+  }
+</script>
+<link rel="stylesheet" href="/css/chatbot.css">
+<script src="/chatbot.js"></script>
+</body>
+</html>

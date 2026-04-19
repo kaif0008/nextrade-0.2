@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NexTrade | Deals Record</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:'#4361ee','primary-dark':'#3f37c9','primary-light':'#4895ef',
+            danger:'#ef233c',success:'#2bc155',warning:'#fca311',info:'#0ea5e9',navy:'#0f172a',
+          },
+          fontFamily: { sans: ['Poppins','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Classes used by JS-generated deal card HTML */
+    .deal-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.05); transition:all .3s; border:1px solid #f1f5f9; }
+    .deal-card:hover { transform:translateY(-3px); box-shadow:0 5px 15px rgba(0,0,0,.08); border-color:#cbd5e1; }
+    .deal-card.clickable { cursor:pointer; }
+    .deal-card.clickable:hover { border-color:#4895ef; box-shadow:0 8px 20px rgba(67,97,238,.15); }
+    .deal-header { padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; background:#fafafa; }
+    .deal-title { font-weight:600; font-size:15px; display:flex; align-items:center; gap:8px; color:#1e293b; }
+    .deal-status { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
+    .status-pending { background:rgba(252,163,17,.1); color:#fca311; }
+    .status-wholesaler_updated { background:rgba(14,165,233,.1); color:#0ea5e9; }
+    .status-confirmed, .status-wholesaler_accepted { background:rgba(43,193,85,.1); color:#2bc155; }
+    .status-rejected { background:rgba(239,35,60,.1); color:#ef233c; }
+    .deal-body { padding:20px; }
+    .deal-product-info { display:flex; gap:15px; margin-bottom:15px; }
+    .deal-image { width:60px; height:60px; border-radius:8px; object-fit:cover; border:1px solid #f1f5f9; }
+    .deal-details { flex:1; }
+    .deal-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; }
+    .deal-metric-label { color:#8d99ae; font-size:11px; text-transform:uppercase; font-weight:600; }
+    .deal-metric-value { font-weight:600; color:#334155; }
+    .deal-metric-value.total { color:#4361ee; font-size:15px; }
+    .deal-counterparty { margin-top:15px; padding-top:15px; border-top:1px dashed #e2e8f0; display:flex; align-items:center; gap:10px; }
+    .cp-icon { width:36px; height:36px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#4361ee; }
+    .cp-info { flex:1; overflow:hidden; }
+    .cp-name { font-weight:600; font-size:13px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cp-sub { font-size:11px; color:#8d99ae; }
+    .action-banner { background:rgba(67,97,238,.05); padding:8px 15px; margin:-20px -20px 15px -20px; border-bottom:1px solid #f1f5f9; font-size:12px; color:#4361ee; font-weight:500; display:flex; align-items:center; gap:8px; }
+    .empty-state { text-align:center; padding:60px 20px; color:#8d99ae; }
+    /* Filter pills */
+    .filter-btn { padding:8px 16px; background:white; border:1px solid #e2e8f0; border-radius:20px; font-size:13px; font-weight:500; color:#8d99ae; cursor:pointer; transition:all .3s; white-space:nowrap; font-family:'Poppins',sans-serif; }
+    .filter-btn:hover { border-color:#4361ee; color:#4361ee; }
+    .filter-btn.active { background:#4361ee; color:white; border-color:#4361ee; }
+    /* Sidebar nav-link (same pattern) */
+    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; color:#8d99ae; text-decoration:none; font-weight:500; transition:all .3s; border:none; background:none; width:100%; text-align:left; cursor:pointer; font-size:14px; }
+    .nav-link:hover { background:rgba(67,97,238,.05); color:#4361ee; }
+    .nav-link.active { background:#4361ee; color:white; }
+    .nav-link i { width:20px; text-align:center; }
+    .logout-btn { color:#ef233c; margin-top:auto; }
+    .logout-btn:hover { background:rgba(239,35,60,.05); color:#ef233c; }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen font-sans overflow-x-hidden">
+
+  <!-- Sidebar Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-[90] hidden"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"
+         class="fixed left-0 top-0 w-64 h-screen bg-white shadow-md z-[100] -translate-x-full lg:translate-x-0 flex flex-col p-6 transition-transform duration-300">
+    <div class="flex items-center justify-between mb-10">
+      <a href="#" id="logoLink" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <button id="closeSidebar" class="text-gray-400 hover:text-gray-700 lg:hidden"><i class="fas fa-times"></i></button>
+    </div>
+    <nav id="sidebarNavs" class="flex flex-col gap-1 flex-1"></nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="ml-0 lg:ml-64 flex-1 p-5 sm:p-7 transition-all duration-300">
+
+    <!-- Topbar -->
+    <header class="flex items-center justify-between mb-7">
+      <div class="flex items-center gap-3">
+        <button id="openSidebar" class="text-gray-600 hover:text-primary text-xl focus:outline-none lg:hidden">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h1 class="text-xl font-semibold text-gray-900">Deals Record</h1>
+          <p class="text-sm text-gray-400">Track all your inquiries, counter-offers, and finalized agreements.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2.5 bg-white px-3 py-2 rounded-full shadow-sm cursor-pointer hover:shadow-md transition" onclick="window.location.href='profile.html'">
+        <div class="text-right hidden sm:block">
+          <div id="topName" class="text-sm font-semibold text-gray-900 leading-none">User</div>
+          <div id="topRole" class="text-xs text-primary font-medium mt-0.5 capitalize">Role</div>
+        </div>
+        <div id="topAvatar" class="w-9 h-9 rounded-full bg-primary-light text-white flex items-center justify-center font-bold text-sm">U</div>
+      </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="flex gap-2 mb-5 overflow-x-auto pb-1">
+      <button class="filter-btn active" onclick="setFilter('all')">All Deals</button>
+      <button class="filter-btn" onclick="setFilter('pending')">Pending Actions</button>
+      <button class="filter-btn" onclick="setFilter('confirmed')">Completed</button>
+      <button class="filter-btn" onclick="setFilter('rejected')">Rejected</button>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <i class="fas fa-box-open text-5xl text-gray-300 mb-4 block"></i>
+      <h3 class="font-semibold text-gray-700 mb-1">No Deals Found</h3>
+      <p class="text-sm">You don't have any deals under this category yet.</p>
+    </div>
+
+    <!-- Deals Grid -->
+    <div id="dealsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+  </main>
+
+  <script>
+    /* ALL JAVASCRIPT IS IDENTICAL TO THE ORIGINAL */
+    const user  = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    if (!user || !token) window.location.href = 'login.html';
+
+    document.getElementById("topName").innerText = user.name;
+    document.getElementById("topRole").innerText = user.role;
+    document.getElementById("topAvatar").innerText = user.name.charAt(0).toUpperCase();
+
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    document.getElementById("openSidebar").addEventListener("click", () => { sidebar.classList.add("-translate-x-0"); sidebar.classList.remove("-translate-x-full"); overlay.classList.remove("hidden"); });
+    document.getElementById("closeSidebar").addEventListener("click", () => { sidebar.classList.add("-translate-x-full"); overlay.classList.add("hidden"); });
+    overlay.addEventListener("click", () => { sidebar.classList.add("-translate-x-full"); overlay.classList.add("hidden"); });
+    // Simple class toggle helper
+    function toggleSidebar() { sidebar.classList.toggle("-translate-x-full"); overlay.classList.toggle("hidden"); }
+    document.getElementById("openSidebar").addEventListener("click", toggleSidebar);
+
+    function setupDashboardNav() {
+      const role = (user.role || "retailer").toLowerCase();
+      const navs = document.getElementById("sidebarNavs");
+      const logo = document.getElementById("logoLink");
+      if (role === "retailer") {
+        logo.href = "retailer-dashboard.html";
+        navs.innerHTML = `
+          <button class="nav-link" onclick="location.href='retailer-dashboard.html'"><i class="fas fa-home"></i> Dashboard</button>
+          <button class="nav-link" onclick="location.href='browse-products.html'"><i class="fas fa-store"></i> Explore Products</button>
+          <button class="nav-link" onclick="location.href='wholesalers.html'"><i class="fas fa-search"></i> Wholesalers</button>
+          <button class="nav-link" onclick="location.href='my-requirements.html'"><i class="fas fa-list-check"></i> My Requirements</button>
+          <button class="nav-link active" onclick="location.href='deals-record.html'"><i class="fas fa-handshake"></i> Deals Record</button>
+          <button class="nav-link" onclick="location.href='messages.html'"><i class="fas fa-comment-dots"></i> Messages</button>
+          <button class="nav-link" onclick="location.href='profile.html'"><i class="fas fa-user"></i> Profile</button>
+          <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>`;
+      } else {
+        logo.href = "wholesaler-dashboard.html";
+        navs.innerHTML = `
+          <a href="wholesaler-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+          <a href="product-management.html"   class="nav-link"><i class="fas fa-box"></i> My Products</a>
+          <a href="deals-record.html"         class="nav-link active"><i class="fas fa-handshake"></i> Deals Record</a>
+          <a href="messages.html"             class="nav-link"><i class="fas fa-envelope"></i> Messages</a>
+          <a href="requirements.html"         class="nav-link"><i class="fas fa-list-check"></i> Requirements</a>
+          <a href="profile.html"              class="nav-link"><i class="fas fa-user-circle"></i> Profile</a>
+          <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>`;
+      }
+    }
+
+    function logout() { localStorage.clear(); location.href = "login.html"; }
+
+    let allDeals = [];
+    let currentFilter = 'all';
+    const isRetailer = user.role === 'retailer';
+
+    async function fetchDeals() {
+      try {
+        const res  = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) { allDeals = data.deals; renderDeals(); }
+      } catch (err) { console.error('Error fetching deals', err); }
+    }
+
+    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR' }).format(val);
+    const parseDate = (d) => new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+    const statusLabelMap = {
+      'pending':'Pending', 'wholesaler_updated':'Offer Updated',
+      'wholesaler_accepted':'Wholesaler Finalizing', 'confirmed':'Confirmed', 'rejected':'Rejected'
+    };
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderDeals();
+    }
+
+    function renderDeals() {
+      const grid  = document.getElementById('dealsGrid');
+      const empty = document.getElementById('emptyState');
+      grid.innerHTML = '';
+
+      let filtered = allDeals;
+      if (currentFilter === 'pending')  filtered = allDeals.filter(d => d.status === 'pending' || d.status === 'wholesaler_updated' || d.status === 'wholesaler_accepted');
+      if (currentFilter === 'confirmed') filtered = allDeals.filter(d => d.status === 'confirmed');
+      if (currentFilter === 'rejected')  filtered = allDeals.filter(d => d.status === 'rejected');
+
+      if (filtered.length === 0) { grid.style.display = 'none'; empty.style.display = 'block'; return; }
+      grid.style.display = 'grid'; empty.style.display = 'none';
+
+      filtered.forEach(deal => {
+        const totalVal  = formatCurrency((deal.offeredPrice || 0) * (deal.quantity || 0));
+        const statClass = `status-${deal.status}`;
+        const statLabel = statusLabelMap[deal.status] || deal.status;
+        const isActionable = (deal.status === 'pending' || deal.status === 'wholesaler_updated' || deal.status === 'wholesaler_accepted');
+
+        let counterpartyHtml = '';
+        if (isRetailer && deal.wholesalerId) {
+          const ws = deal.wholesalerId;
+          const ratingStar = ws.rating ? `<i class="fas fa-star" style="color:#fca311;font-size:10px;"></i> ${ws.rating}` : 'New Partner';
+          counterpartyHtml = `<div class="deal-counterparty"><div class="cp-icon"><i class="fas fa-building"></i></div><div class="cp-info"><div class="cp-name">${ws.businessName || ws.name || 'Unknown Wholesaler'}</div><div class="cp-sub">Wholesaler &bull; ${ratingStar}</div></div></div>`;
+        } else if (!isRetailer && deal.retailerId) {
+          const rt = deal.retailerId;
+          counterpartyHtml = `<div class="deal-counterparty"><div class="cp-icon"><i class="fas fa-store"></i></div><div class="cp-info"><div class="cp-name">${rt.name || 'Unknown Retailer'}</div><div class="cp-sub">Retailer &bull; ${rt.mobileNumber || 'No contact info'}</div></div></div>`;
+        }
+
+        let onClickStr = '';
+        let cardClass = isActionable ? 'deal-card clickable' : 'deal-card';
+        let dealTitleIcon = isActionable ? '<i class="fas fa-handshake" style="color:#4361ee;"></i>' : '<i class="fas fa-handshake" style="color:#cbd5e1;"></i>';
+        let actionBanner = '';
+        if (isActionable) {
+          const counterpartyId = isRetailer ? (deal.wholesalerId?._id || deal.wholesalerId) : (deal.retailerId?._id || deal.retailerId);
+          onClickStr = `onclick="window.location.href='messages.html?user=${counterpartyId}'"`;
+          actionBanner = `<div class="action-banner"><i class="fas fa-comment-dots"></i> Click to open chat and resolve this deal</div>`;
+        }
+
+        const cardHtml = `
+          <div class="${cardClass}" ${onClickStr}>
+            <div class="deal-header">
+              <div class="deal-title">${dealTitleIcon} Deal for ${deal.productName || 'Product'}</div>
+              <span class="deal-status ${statClass}">${statLabel}</span>
+            </div>
+            <div class="deal-body">
+              ${actionBanner}
+              <div class="deal-product-info">
+                <img src="${deal.productImage || 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=100&q=70'}" class="deal-image">
+                <div class="deal-details">
+                  <div class="deal-grid">
+                    <div><div class="deal-metric-label">Date Initiated</div><div class="deal-metric-value" style="font-size:12px;">${parseDate(deal.createdAt)}</div></div>
+                    <div><div class="deal-metric-label">Unit Price</div><div class="deal-metric-value" style="color:#10b981;">${formatCurrency(deal.offeredPrice)}</div></div>
+                    <div><div class="deal-metric-label">Quantity</div><div class="deal-metric-value">${deal.quantity} Units</div></div>
+                    <div><div class="deal-metric-label">Total Value</div><div class="deal-metric-value total">${totalVal}</div></div>
+                  </div>
+                </div>
+              </div>
+              ${counterpartyHtml}
+            </div>
+          </div>`;
+        grid.innerHTML += cardHtml;
+      });
+    }
+
+    setupDashboardNav();
+    fetchDeals();
+  </script>
+</body>
+</html>

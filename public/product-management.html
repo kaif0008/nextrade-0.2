@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NexTrade | Product Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary:'#4361ee','primary-dark':'#3f37c9','primary-light':'#4895ef',danger:'#ef233c',success:'#2bc155',warning:'#fca311' },
+          fontFamily: { sans:['Poppins','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Classes referenced by JS-generated card HTML */
+    .card { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.05); overflow:hidden; transition:.3s; position:relative; }
+    .card:hover { box-shadow:0 5px 15px rgba(0,0,0,.08); transform:translateY(-4px); }
+    .card img { width:100%; height:180px; object-fit:cover; }
+    .badge { position:absolute; top:12px; right:12px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; color:white; }
+    .badge-success { background:#2bc155; }
+    .badge-warning { background:#fca311; }
+    .badge-danger { background:#ef233c; }
+    .card-body { padding:18px; }
+    .card-meta { font-size:12px; color:#8d99ae; margin-bottom:4px; }
+    .card-title { font-size:15px; font-weight:600; color:#1e293b; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .price { font-size:17px; font-weight:700; color:#4361ee; margin-bottom:12px; }
+    .stock-section { background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:14px; }
+    .stock-info { display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px; }
+    .stock-controls { display:flex; align-items:center; gap:8px; }
+    .stock-btn { width:26px; height:26px; border-radius:5px; border:1px solid #e2e8f0; background:white; color:#1e293b; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; }
+    .stock-btn:hover { background:#e2e8f0; }
+    .stock-btn.add { color:#2bc155; }
+    .stock-btn.reduce { color:#ef233c; }
+    .card-actions { display:flex; gap:8px; }
+    .card-actions button { flex:1; padding:8px; border:none; border-radius:6px; cursor:pointer; font-weight:500; transition:.2s; font-family:'Poppins',sans-serif; font-size:13px; }
+    .btn-edit { background:#e0e7ff; color:#4361ee; }
+    .btn-edit:hover { background:#c7d2fe; }
+    .btn-delete { background:#ffe4e6; color:#ef233c; }
+    .btn-delete:hover { background:#fecdd3; }
+    /* Sidebar nav-link */
+    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; color:#8d99ae; text-decoration:none; font-weight:500; transition:all .3s; border:none; background:none; width:100%; text-align:left; cursor:pointer; font-size:14px; }
+    .nav-link:hover { background:rgba(67,97,238,.05); color:#4361ee; }
+    .nav-link.active { background:#4361ee; color:white; }
+    .nav-link i { width:20px; text-align:center; }
+    .logout-btn { color:#ef233c; }
+    .logout-btn:hover { background:rgba(239,35,60,.05); color:#ef233c; }
+    /* Slide-over modal */
+    .slide-modal { position:fixed; top:0; right:-420px; width:400px; max-width:100%; height:100vh; background:white; z-index:1000; box-shadow:-5px 0 15px rgba(0,0,0,.1); transition:right .3s ease; display:flex; flex-direction:column; }
+    .slide-modal.active { right:0; }
+    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:999; opacity:0; visibility:hidden; transition:.3s; }
+    .modal-overlay.active { opacity:1; visibility:visible; }
+    .form-input { width:100%; padding:10px 14px; border-radius:8px; border:1.5px solid #e2e8f0; font-size:13px; outline:none; font-family:'Poppins',sans-serif; transition:.2s; }
+    .form-input:focus { border-color:#4361ee; box-shadow:0 0 0 3px rgba(67,97,238,.08); }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen font-sans overflow-x-hidden">
+
+  <!-- Sidebar Overlay -->
+  <div class="modal-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"
+         class="fixed left-0 top-0 w-64 h-screen bg-white shadow-md z-[100] -translate-x-full lg:translate-x-0 flex flex-col p-6 transition-transform duration-300">
+    <div class="flex items-center justify-between mb-10">
+      <a href="wholesaler-dashboard.html" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <button id="closeSidebar" class="text-gray-400 hover:text-gray-700 lg:hidden"><i class="fas fa-times"></i></button>
+    </div>
+    <nav class="flex flex-col gap-1 flex-1">
+      <button class="nav-link" onclick="go('dashboard')"><i class="fas fa-home"></i> Dashboard</button>
+      <button class="nav-link active" onclick="go('products')"><i class="fas fa-box"></i> My Products</button>
+      <button class="nav-link" onclick="go('deals')"><i class="fas fa-handshake"></i> Deals Record</button>
+      <button class="nav-link" onclick="go('messages')"><i class="fas fa-comment-dots"></i> Messages</button>
+      <button class="nav-link" onclick="go('requirements')"><i class="fas fa-list-check"></i> Requirements</button>
+      <button class="nav-link" onclick="go('profile')"><i class="fas fa-user"></i> Profile</button>
+    </nav>
+    <button class="nav-link logout-btn mt-4" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="ml-0 lg:ml-64 flex-1 p-5 sm:p-7 transition-all duration-300">
+
+    <!-- Topbar -->
+    <header class="flex items-center justify-between mb-7">
+      <div class="flex items-center gap-3">
+        <button id="openSidebar" class="text-gray-600 hover:text-primary text-xl lg:hidden"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-semibold text-gray-900">Inventory Management</h1>
+      </div>
+      <div class="flex items-center gap-2.5 bg-white px-3 py-2 rounded-full shadow-sm cursor-pointer hover:shadow-md transition" onclick="go('profile')">
+        <div class="text-right hidden sm:block">
+          <div id="topName" class="text-sm font-semibold text-gray-900 leading-none">User</div>
+          <div class="text-xs text-primary font-medium mt-0.5">Wholesaler</div>
+        </div>
+        <div id="topAvatar" class="w-9 h-9 rounded-full bg-primary-light text-white flex items-center justify-center font-bold text-sm">U</div>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <div class="bg-white rounded-2xl shadow-sm p-4 mb-5 flex flex-wrap items-center gap-3">
+      <input type="text" id="searchInput" class="form-input flex-1 min-w-[160px]" placeholder="Search products by name...">
+      <select id="filterSelect" class="form-input w-auto">
+        <option value="all">All Products</option>
+        <option value="low">Low Stock (≤ 10)</option>
+        <option value="critical">Critical Stock (0)</option>
+      </select>
+      <select id="categorySelect" class="form-input w-auto">
+        <option value="">All Categories</option>
+      </select>
+      <button onclick="openModal()" class="flex items-center gap-1.5 bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition border-none cursor-pointer">
+        <i class="fas fa-plus"></i> Add Product
+      </button>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="productList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+  </main>
+
+  <!-- ════ SLIDE-OVER MODAL ════ -->
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="slide-modal" id="productModal">
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <h2 id="modalTitle" class="text-lg font-bold text-gray-900">Add Product</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-xl border-none bg-transparent cursor-pointer"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 overflow-y-auto flex-1 flex flex-col gap-4">
+      <form id="productForm" class="flex flex-col gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase">Product Name</label>
+          <input type="text" id="name" class="form-input" required placeholder="e.g. Amul Milk 1L">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase">Price (₹)</label>
+            <input type="number" id="price" class="form-input" required min="0">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase">Unit</label>
+            <select id="unit" class="form-input" onchange="onUnitSelectChange()">
+              <option value="piece">Piece</option>
+              <option value="kg">Kg</option>
+              <option value="gram">Gram</option>
+              <option value="liter">Liter</option>
+              <option value="box">Box</option>
+              <option value="dozen">Dozen</option>
+              <option value="Other">Other (Custom)</option>
+            </select>
+            <input type="text" id="custom_unit" class="form-input mt-1" placeholder="Enter custom unit" style="display:none;">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase">Stock</label>
+            <input type="number" id="stock" class="form-input" required min="0">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase">MOQ</label>
+            <input type="number" id="moq" class="form-input" required min="1">
+          </div>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase">Category (auto)</label>
+          <input type="text" id="category" class="form-input bg-gray-50 cursor-not-allowed" readonly required>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase">Image</label>
+          <input type="file" id="imageFile" accept="image/*" class="text-sm" onchange="previewImage(event)">
+          <div id="imagePreviewContainer" class="mt-2" style="display:none; position:relative; width:max-content;">
+            <img id="imagePreview" src="" class="max-h-24 rounded-lg border border-gray-200">
+            <button type="button" onclick="clearImage()" class="absolute -top-2 -right-2 bg-danger text-white border-none rounded-full w-5 h-5 cursor-pointer text-xs flex items-center justify-center"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase">Description</label>
+          <textarea id="description" class="form-input" rows="3" placeholder="Brief description of the product..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="p-5 border-t border-gray-100 flex gap-3">
+      <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition border-none cursor-pointer">Cancel</button>
+      <button onclick="saveProduct()" class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold text-sm transition border-none cursor-pointer">Save Product</button>
+    </div>
+  </div>
+
+  <script>
+    /* ALL JAVASCRIPT IDENTICAL TO ORIGINAL */
+    const user  = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+    if (!user || !token)            location.href = "login.html";
+    if (user.role !== "wholesaler") location.href = "dashboard.html";
+
+    // Navigation
+    function go(p) {
+      const map={dashboard:'wholesaler-dashboard.html',products:'product-management.html',deals:'deals-record.html',messages:'messages.html',profile:'profile.html',requirements:'requirements.html'};
+      if(map[p]) location.href=map[p];
+    }
+    function logout() { localStorage.clear(); location.href="login.html"; }
+
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+    function openSB()  { sidebar.classList.remove('-translate-x-full'); sidebarOverlay.classList.add('active'); }
+    function closeSB() { sidebar.classList.add('-translate-x-full');    sidebarOverlay.classList.remove('active'); }
+    document.getElementById("openSidebar").addEventListener("click", openSB);
+    document.getElementById("closeSidebar").addEventListener("click", closeSB);
+    sidebarOverlay.addEventListener("click", closeSB);
+
+    // User info
+    document.getElementById("topName").innerText   = user.name;
+    document.getElementById("topAvatar").innerText = user.name.charAt(0).toUpperCase();
+
+    // SYSTEM LOGIC (all preserved exactly)
+    let allProducts = [];
+    let editingId   = null;
+    let selectedImageFile = null;
+
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedImageFile = file;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById("imagePreview").src = e.target.result;
+        document.getElementById("imagePreviewContainer").style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      document.getElementById("imageFile").value = "";
+      selectedImageFile = null;
+      document.getElementById("imagePreviewContainer").style.display = "none";
+    }
+
+    async function loadProducts() {
+      try {
+        const res  = await fetch('/api/products/my', { headers:{ "Authorization":"Bearer "+token } });
+        const data = await res.json();
+        if (data.success) { allProducts=data.products; updateCategoryDropdown(); renderProducts(); }
+      } catch(e) { console.error(e); }
+    }
+
+    function updateCategoryDropdown() {
+      const categories = [...new Set(allProducts.map(p=>p.category).filter(Boolean))];
+      const select = document.getElementById("categorySelect");
+      select.innerHTML = `<option value="">All Categories</option>` + categories.map(c=>`<option value="${c}">${c}</option>`).join("");
+    }
+
+    function renderProducts() {
+      const list     = document.getElementById("productList");
+      const search   = document.getElementById("searchInput").value.toLowerCase();
+      const filterBy = document.getElementById("filterSelect").value;
+      const cat      = document.getElementById("categorySelect").value;
+
+      let filtered = allProducts.filter(p => p.name.toLowerCase().includes(search));
+      if (cat) filtered = filtered.filter(p => p.category === cat);
+      if (filterBy === "low")      filtered = filtered.filter(p => p.stock > 0 && p.stock <= 10);
+      if (filterBy === "critical") filtered = filtered.filter(p => p.stock === 0);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#8d99ae;">No products found</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(p => {
+        let badge = "";
+        if (p.stock === 0)      badge = `<div class="badge badge-danger">Out of Stock</div>`;
+        else if (p.stock <= 10) badge = `<div class="badge badge-warning">Low Stock</div>`;
+        else                    badge = `<div class="badge badge-success">In Stock</div>`;
+        const reserved  = p.reservedStock || 0;
+        const available = p.stock - reserved;
+        return `
+        <div class="card">
+          ${badge}
+          <img src="${p.image||'https://images.unsplash.com/photo-1572017351651-7ecdeca91834?auto=format&fit=crop&q=80&w=400'}" alt="${p.name}">
+          <div class="card-body">
+            <div class="card-meta"><i class="fas fa-tag"></i> ${p.category||'General'}</div>
+            <h3 class="card-title">${p.name}</h3>
+            <div class="price">₹${p.pricePerUnit} <span style="font-size:12px;color:#8d99ae;font-weight:400;">/ ${p.unit}</span></div>
+            <div class="stock-section">
+              <div class="stock-info">
+                <span><i class="fas fa-boxes"></i> Total: <strong>${p.stock}</strong></span>
+                <span style="color:#fca311;"><i class="fas fa-clock"></i> Reserved: ${reserved}</span>
+              </div>
+              <div class="stock-info" style="margin-bottom:0;align-items:center;">
+                <span style="color:${available>0?'#2bc155':'#ef233c'}"><i class="fas fa-check-circle"></i> Available: ${available}</span>
+                <div class="stock-controls">
+                  <button class="stock-btn reduce" onclick="quickUpdateStock('${p._id}',-1)" title="Reduce Stock"><i class="fas fa-minus"></i></button>
+                  <button class="stock-btn add"    onclick="quickUpdateStock('${p._id}', 1)" title="Add Stock"><i class="fas fa-plus"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="btn-edit" onclick="editProduct('${p._id}')"><i class="fas fa-edit"></i> Edit</button>
+              <button class="btn-delete" onclick="deleteProduct('${p._id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function quickUpdateStock(id, amount) {
+      try {
+        const res  = await fetch(`/api/products/${id}/stock`, { method:'PATCH', headers:{"Content-Type":"application/json","Authorization":"Bearer "+token}, body:JSON.stringify({amount}) });
+        const data = await res.json();
+        if (data.success) {
+          const idx = allProducts.findIndex(p=>p._id===id);
+          if (idx > -1) allProducts[idx].stock += amount;
+          renderProducts();
+        } else alert("Failed to update stock");
+      } catch(e) {}
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderProducts);
+    document.getElementById("filterSelect").addEventListener("change", renderProducts);
+    document.getElementById("categorySelect").addEventListener("change", renderProducts);
+
+    const modal = document.getElementById("productModal");
+    const modalOverlay = document.getElementById("modalOverlay");
+
+    function openModal() {
+      modal.classList.add("active");
+      modalOverlay.classList.add("active");
+      document.getElementById("category").value = user.industry || "General";
+    }
+
+    function onUnitSelectChange() {
+      const select = document.getElementById("unit");
+      const custom = document.getElementById("custom_unit");
+      if (select.value === 'Other') { custom.style.display='block'; custom.focus(); }
+      else { custom.style.display='none'; }
+    }
+
+    function closeModal() {
+      modal.classList.remove("active");
+      modalOverlay.classList.remove("active");
+      document.getElementById("productForm").reset();
+      document.getElementById("custom_unit").style.display = 'none';
+      clearImage();
+      editingId = null;
+      document.getElementById("modalTitle").innerText = "Add Product";
+    }
+    modalOverlay.addEventListener("click", closeModal);
+
+    async function saveProduct() {
+      if (!user.emailVerified) { alert('Email verification required to manage products. Please verify your email from your Profile page.'); return; }
+      const name        = document.getElementById("name").value.trim();
+      const price       = document.getElementById("price").value;
+      const unitSel     = document.getElementById("unit").value;
+      const unit        = unitSel === 'Other' ? document.getElementById("custom_unit").value.trim() : unitSel;
+      const stock       = document.getElementById("stock").value;
+      const moq         = document.getElementById("moq").value;
+      const category    = document.getElementById("category").value;
+      const description = document.getElementById("description").value.trim();
+      if (!name)                         return alert("Product Name is required");
+      if (!price || price <= 0)          return alert("Valid Price is required");
+      if (!unit)                         return alert("Product Unit is required");
+      if (!stock || stock < 0)           return alert("Initial Stock is required");
+      if (!moq || moq < 1)               return alert("Minimum Order Quantity (MOQ) must be at least 1");
+      if (!category)                     return alert("Category is required");
+      if (!editingId && !selectedImageFile) return alert("Product Image is required.");
+      if (!description)                  return alert("Product Description is required.");
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('pricePerUnit', Number(price));
+      formData.append('unit', unit);
+      formData.append('stock', Number(stock));
+      formData.append('moq', Number(moq));
+      formData.append('category', category);
+      formData.append('description', description);
+      if (selectedImageFile) formData.append('image', selectedImageFile);
+      try {
+        const url    = editingId ? `/api/products/${editingId}` : '/api/products';
+        const method = editingId ? 'PUT' : 'POST';
+        const res    = await fetch(url, { method, headers:{"Authorization":"Bearer "+token}, body:formData });
+        const data   = await res.json();
+        if (data.success) { closeModal(); loadProducts(); }
+        else alert(data.message || "Error saving product");
+      } catch(e) { console.error(e); }
+    }
+
+    function editProduct(id) {
+      const p = allProducts.find(x => x._id === id);
+      if (!p) return;
+      document.getElementById("name").value  = p.name || '';
+      document.getElementById("price").value = p.pricePerUnit || '';
+      const unitSelect = document.getElementById("unit");
+      const customUnit = document.getElementById("custom_unit");
+      const presetUnits = Array.from(unitSelect.options).map(o => o.value);
+      if (presetUnits.includes(p.unit)) { unitSelect.value=p.unit; customUnit.style.display='none'; }
+      else { unitSelect.value='Other'; customUnit.value=p.unit||''; customUnit.style.display='block'; }
+      document.getElementById("stock").value       = p.stock || 0;
+      document.getElementById("moq").value         = p.moq || 1;
+      document.getElementById("category").value    = user.industry || "General";
+      document.getElementById("description").value = p.description || '';
+      if (p.image) { document.getElementById("imagePreview").src=p.image; document.getElementById("imagePreviewContainer").style.display="block"; }
+      else { clearImage(); }
+      editingId = id;
+      document.getElementById("modalTitle").innerText = "Edit Product";
+      openModal();
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm("Are you sure you want to delete this product?")) return;
+      try {
+        const res = await fetch(`/api/products/${id}`, { method:'DELETE', headers:{"Authorization":"Bearer "+token} });
+        if (res.ok) { allProducts=allProducts.filter(p=>p._id!==id); updateCategoryDropdown(); renderProducts(); }
+      } catch(e) {}
+    }
+
+    loadProducts();
+  </script>
+  <script src="/chatbot.js"></script>
+</body>
+</html>

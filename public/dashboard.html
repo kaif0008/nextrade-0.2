@@ -1,0 +1,17 @@
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
+
+if (!user || !token) {
+    window.location.href = "login.html";
+}
+
+// 🔥 REDIRECT BASED ON ROLE
+if (user.role === "wholesaler") {
+    window.location.href = "wholesaler-dashboard.html";
+}
+
+if (user.role === "retailer") {
+    window.location.href = "retailer-dashboard.html";
+}
+</script>

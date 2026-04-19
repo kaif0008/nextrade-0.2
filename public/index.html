@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexTrade | Wholesale Marketplace</title>
+  <meta name="description" content="India's #1 B2B Wholesale Marketplace. Connect retailers with verified wholesalers, negotiate deals, and restock inventory intelligently.">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="categories.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:        '#4361ee',
+            'primary-dark': '#3f37c9',
+            'primary-light':'#4895ef',
+            accent:         '#f72585',
+            danger:         '#ef233c',
+            success:        '#2bc155',
+            navy:           '#0f172a',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+            syne: ['Syne', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Toast & Requirement Modal custom remnants kept minimal -->
+  <style>
+    /* Toast (used by main.js showToast()) */
+    .toast { position:fixed; bottom:24px; right:24px; padding:12px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 4px 15px rgba(0,0,0,.15); z-index:9999; transform:translateY(20px); opacity:0; transition:.3s; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.ok  { background:#d1fae5; color:#065f46; border-left:4px solid #2bc155; }
+    .toast.err { background:#fee2e2; color:#991b1b; border-left:4px solid #ef233c; }
+    /* Requirement card (dynamically built by main.js loadRequirements) */
+    .req-card { background:white; border-radius:16px; padding:25px; border:1px solid #f1f5f9; transition:.3s; display:flex; flex-direction:column; position:relative; }
+    .req-card:hover { transform:translateY(-5px); box-shadow:0 15px 35px rgba(0,0,0,.08); }
+    .req-badge { position:absolute; top:20px; right:20px; background:#eff6ff; color:#4361ee; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+    .req-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:#0f172a; margin-bottom:8px; }
+    .req-meta { display:flex; gap:15px; font-size:13px; color:#64748b; margin-bottom:12px; }
+    .req-meta span { display:flex; align-items:center; gap:5px; }
+    .req-desc { font-size:14px; color:#64748b; line-height:1.5; margin-bottom:20px; flex:1; }
+    .req-footer { display:flex; align-items:center; justify-content:space-between; padding-top:15px; border-top:1px solid #f1f5f9; flex-wrap:wrap; gap:10px; }
+    .req-retailer { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#1e293b; }
+    .btn-send-offer { background:#0f172a; color:white; border:none; padding:8px 16px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+    .btn-send-offer:hover { background:#4361ee; }
+    /* Req modal show/hide */
+    .nx-modal { display:none; }
+    .nx-modal.show { display:flex; }
+  </style>
+</head>
+
+<body class="bg-gray-50 font-sans overflow-x-hidden">
+
+  <!-- ════════════════════════════════════════════════════════
+       NAVBAR
+       ════════════════════════════════════════════════════════ -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between py-4">
+
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-2.5 no-underline">
+          <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain">
+          <div>
+            <div class="font-bold text-lg text-gray-900 leading-none">
+              Nex<span class="text-primary">Trade</span>
+            </div>
+            <div class="text-xs text-gray-400 leading-none mt-0.5 hidden sm:block">The Nexus of efficient Business</div>
+          </div>
+        </a>
+
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center gap-1">
+          <a href="index.html"
+             class="px-3 py-2 text-sm font-medium text-primary rounded-lg relative">
+            Home
+          </a>
+          <a href="wholesalers.html"
+             class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">
+            Wholesalers
+          </a>
+          <a href="browse-products.html"
+             class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">
+            Explore Products
+          </a>
+          <a href="contact.html"
+             class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">
+            Contact Us
+          </a>
+        </nav>
+
+        <!-- Desktop Auth Buttons -->
+        <div class="hidden md:flex items-center gap-2">
+          <a href="login.html" id="loginBtn"
+             class="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 rounded-xl transition">
+            Login
+          </a>
+          <a href="signup.html" id="signupBtn"
+             class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl shadow hover:shadow-primary/30 transition">
+            Sign Up
+          </a>
+          <a href="dashboard.html" id="dashboardBtn"
+             class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl shadow hover:shadow-primary/30 transition"
+             style="display:none;">
+            Dashboard
+          </a>
+        </div>
+
+        <!-- Mobile Hamburger -->
+        <button id="mobileMenuBtn"
+                class="md:hidden p-2 text-gray-600 hover:text-primary focus:outline-none">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Mobile Menu (hidden by default) -->
+      <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-100">
+        <nav class="flex flex-col gap-1 pt-3">
+          <a href="index.html"   class="px-3 py-2.5 text-sm font-medium text-primary bg-primary/5 rounded-lg">Home</a>
+          <a href="wholesalers.html"     class="px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+          <a href="browse-products.html" class="px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+          <a href="contact.html"         class="px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+          <div class="flex gap-2 pt-2 border-t border-gray-100 mt-1">
+            <a href="login.html" id="loginBtnMobile"
+               class="flex-1 text-center py-2.5 text-sm font-semibold text-primary border border-primary rounded-xl hover:bg-primary/5 transition">Login</a>
+            <a href="signup.html" id="signupBtnMobile"
+               class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition">Sign Up</a>
+            <a href="dashboard.html" id="dashboardBtnMobile"
+               class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition"
+               style="display:none;">Dashboard</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════════
+       HERO
+       ════════════════════════════════════════════════════════ -->
+  <section class="bg-navy text-white relative overflow-hidden py-20 sm:py-28 px-4">
+    <!-- Subtle grid overlay -->
+    <div class="absolute inset-0 opacity-5"
+         style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22none%22 stroke=%22%23ffffff%22 stroke-width=%220.5%22 stroke-dasharray=%222 4%22/></svg>'); background-repeat:repeat;">
+    </div>
+    <!-- Glow -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+        <!-- Text -->
+        <div class="gsap-fade text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-xs font-semibold text-slate-300 backdrop-blur-sm mb-6">
+            <i class="fas fa-shield-check text-primary-light"></i>
+            India's #1 Trusted B2B Hub
+          </div>
+
+          <h1 class="font-syne text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5">
+            The Nexus of<br>
+            <span class="bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
+              Wholesale Trading
+            </span>
+          </h1>
+
+          <p class="text-slate-400 text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
+            Discover pre-verified wholesalers, secure unbeatable bulk rates, and seamlessly restock your inventory through one intelligent platform.
+          </p>
+
+          <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
+            <a href="wholesalers.html"
+               class="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary/30 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+              Browse Wholesalers <i class="fas fa-arrow-right text-sm"></i>
+            </a>
+            <button id="heroPostBtn"
+                    onclick="toggleReqModal(true)"
+                    class="hidden items-center gap-2 px-6 py-3.5 bg-amber-400 text-navy font-bold rounded-xl hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-400/30 transition-all duration-300">
+              <i class="fas fa-plus-circle"></i> Post Requirement
+            </button>
+            <a href="signup.html" id="heroJoinBtn"
+               class="flex items-center gap-2 px-6 py-3.5 bg-white/10 border border-white/20 text-white font-semibold rounded-xl backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
+              Join as Supplier
+            </a>
+          </div>
+        </div>
+
+        <!-- Hero Image -->
+        <div class="gsap-slide-left relative hidden lg:block">
+          <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=800&auto=format&fit=crop"
+               class="w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-white/10 animate-float"
+               alt="Wholesale Trade Dashboard">
+
+          <!-- Float Cards -->
+          <div class="absolute -bottom-5 -left-8 flex items-center gap-4 bg-navy/80 backdrop-blur-lg p-4 rounded-2xl border border-white/10 shadow-2xl">
+            <div class="w-10 h-10 flex items-center justify-center bg-primary/20 rounded-full text-primary-light text-xl">
+              <i class="fas fa-box-open"></i>
+            </div>
+            <div>
+              <div class="font-bold font-syne text-lg">50,000+</div>
+              <div class="text-xs text-slate-400">Products Listed</div>
+            </div>
+          </div>
+
+          <div class="absolute -top-5 -right-5 flex items-center gap-4 bg-navy/80 backdrop-blur-lg p-4 rounded-2xl border border-white/10 shadow-2xl">
+            <div class="w-10 h-10 flex items-center justify-center bg-success/20 rounded-full text-success text-xl">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+              <div class="font-bold font-syne text-lg">100% Verified</div>
+              <div class="text-xs text-slate-400">Trusted Suppliers</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       STATS STRIP
+       ════════════════════════════════════════════════════════ -->
+  <section class="bg-white border-b border-gray-100 py-10 px-4">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+      <div class="gsap-counter">
+        <div class="font-syne text-4xl font-bold text-primary mb-1">15,000+</div>
+        <div class="text-xs font-semibold uppercase tracking-widest text-gray-500">Active Retailers</div>
+      </div>
+      <div class="gsap-counter sm:border-x border-gray-100">
+        <div class="font-syne text-4xl font-bold text-primary mb-1">850+</div>
+        <div class="text-xs font-semibold uppercase tracking-widest text-gray-500">Verified Wholesalers</div>
+      </div>
+      <div class="gsap-counter">
+        <div class="font-syne text-4xl font-bold text-primary mb-1">120+</div>
+        <div class="text-xs font-semibold uppercase tracking-widest text-gray-500">Cities Covered</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       CATEGORIES BENTO GRID
+       ════════════════════════════════════════════════════════ -->
+  <section class="py-20 px-4 bg-slate-50">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12 gsap-fade">
+        <h2 class="font-syne text-3xl sm:text-4xl font-bold text-navy mb-3">Explore By Category</h2>
+        <p class="text-gray-500 max-w-xl mx-auto text-sm sm:text-base">
+          Source high-margin inventory directly from top-rated manufacturers and distributors.
+        </p>
+      </div>
+
+      <!-- Bento Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[200px] sm:auto-rows-[250px]">
+
+        <!-- FMCG (tall + wide) -->
+        <a href="wholesalers.html"
+           class="relative rounded-2xl overflow-hidden flex items-end p-6 col-span-2 row-span-2 group gsap-scale">
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80"
+               class="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Grocery">
+          <div class="absolute inset-0 bg-gradient-to-t from-navy/90 to-primary/10 group-hover:from-navy/95 group-hover:to-primary/40 transition duration-300"></div>
+          <div class="relative z-10 text-white w-full">
+            <div class="w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl flex items-center justify-center mb-3 text-lg">
+              <i class="fas fa-shopping-basket"></i>
+            </div>
+            <h3 class="font-syne text-2xl font-bold mb-1">FMCG & Groceries</h3>
+            <div class="flex items-center justify-between text-xs text-slate-300">
+              <span>12,400+ Products</span>
+              <i class="fas fa-arrow-right opacity-0 group-hover:opacity-100 transition"></i>
+            </div>
+          </div>
+        </a>
+
+        <!-- Electronics -->
+        <a href="wholesalers.html"
+           class="relative rounded-2xl overflow-hidden flex items-end p-5 group gsap-scale">
+          <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500&q=80"
+               class="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Electronics">
+          <div class="absolute inset-0 bg-gradient-to-t from-navy/90 to-transparent group-hover:from-navy/95 transition"></div>
+          <div class="relative z-10 text-white">
+            <div class="w-8 h-8 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg flex items-center justify-center mb-2 text-sm">
+              <i class="fas fa-laptop"></i>
+            </div>
+            <h3 class="font-syne text-lg font-bold">Electronics</h3>
+            <p class="text-xs text-slate-300">8,100+ Products</p>
+          </div>
+        </a>
+
+        <!-- Pharma -->
+        <a href="wholesalers.html"
+           class="relative rounded-2xl overflow-hidden flex items-end p-5 group gsap-scale">
+          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&q=80"
+               class="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Pharma">
+          <div class="absolute inset-0 bg-gradient-to-t from-navy/90 to-transparent group-hover:from-navy/95 transition"></div>
+          <div class="relative z-10 text-white">
+            <div class="w-8 h-8 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg flex items-center justify-center mb-2 text-sm">
+              <i class="fas fa-capsules"></i>
+            </div>
+            <h3 class="font-syne text-lg font-bold">Pharma & Health</h3>
+            <p class="text-xs text-slate-300">4,500+ Products</p>
+          </div>
+        </a>
+
+        <!-- Apparel (wide) -->
+        <a href="wholesalers.html"
+           class="relative rounded-2xl overflow-hidden flex items-end p-5 col-span-2 group gsap-scale">
+          <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&q=80"
+               class="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Apparel">
+          <div class="absolute inset-0 bg-gradient-to-t from-navy/90 to-transparent group-hover:from-navy/95 transition"></div>
+          <div class="relative z-10 text-white">
+            <div class="w-8 h-8 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg flex items-center justify-center mb-2 text-sm">
+              <i class="fas fa-tshirt"></i>
+            </div>
+            <h3 class="font-syne text-xl font-bold">Clothing & Textiles</h3>
+            <p class="text-xs text-slate-300">9,200+ Products</p>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       FEATURES
+       ════════════════════════════════════════════════════════ -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12 gsap-fade">
+        <h2 class="font-syne text-3xl sm:text-4xl font-bold text-navy mb-3">Unfair Advantage For Your Business</h2>
+        <p class="text-gray-500 max-w-xl mx-auto">We eliminate the intermediaries and connect you directly with the source.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="group bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-sm hover:-translate-y-2.5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 gsap-fade-up">
+          <div class="w-16 h-16 bg-slate-50 group-hover:bg-primary rounded-2xl flex items-center justify-center text-3xl text-primary group-hover:text-white mx-auto mb-5 transition-all duration-300">
+            <i class="ri-shield-check-fill"></i>
+          </div>
+          <h3 class="font-syne text-lg font-bold text-navy mb-3">Strict Verification</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Every wholesaler passes rigorous KYC documentation and facility checks to ensure you only deal with legitimate businesses.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="group bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-sm hover:-translate-y-2.5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 gsap-fade-up" style="transition-delay:0.1s">
+          <div class="w-16 h-16 bg-slate-50 group-hover:bg-primary rounded-2xl flex items-center justify-center text-3xl text-primary group-hover:text-white mx-auto mb-5 transition-all duration-300">
+            <i class="ri-money-dollar-circle-fill"></i>
+          </div>
+          <h3 class="font-syne text-lg font-bold text-navy mb-3">0% Middleman Fees</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Negotiate directly with manufacturers and major distributors via integrated messaging to secure ultimate margins.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="group bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-sm hover:-translate-y-2.5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 gsap-fade-up" style="transition-delay:0.2s">
+          <div class="w-16 h-16 bg-slate-50 group-hover:bg-primary rounded-2xl flex items-center justify-center text-3xl text-primary group-hover:text-white mx-auto mb-5 transition-all duration-300">
+            <i class="ri-rocket-2-fill"></i>
+          </div>
+          <h3 class="font-syne text-lg font-bold text-navy mb-3">Smart Analytics</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Wholesalers benefit from an integrated Real-Time Inventory dashboard keeping core metrics and stock levels flowing smoothly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       MARKETPLACE SECTION (role-gated, shown by main.js)
+       ════════════════════════════════════════════════════════ -->
+  <section id="marketplaceSection" class="py-16 px-4 bg-white border-t border-gray-100" style="display:none;">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-10">
+        <h2 id="mpTitle" class="font-syne text-2xl sm:text-3xl font-bold text-navy mb-2">Marketplace</h2>
+        <p id="mpSub" class="text-gray-500 text-sm"></p>
+      </div>
+
+      <!-- Requirements Feed (wholesaler sees this) -->
+      <div id="wholesalerReqFeed" style="display:none;">
+        <div id="reqList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        <div id="mpEmptyState" class="text-center py-16 text-gray-400" style="display:none;">
+          <i class="fas fa-inbox text-5xl mb-4 block text-gray-300"></i>
+          <p class="font-medium">No open requirements matching your categories yet.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       POST REQUIREMENT MODAL (retailer)
+       IDs preserved exactly for main.js
+       ════════════════════════════════════════════════════════ -->
+  <div id="reqModal" class="nx-modal fixed inset-0 bg-navy/60 backdrop-blur-sm items-center justify-center z-[1000] p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden modal-animate">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h3 class="font-syne font-bold text-navy text-lg">Post Your Requirement</h3>
+        <button onclick="toggleReqModal(false)"
+                class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+      <!-- Body -->
+      <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500">Product Name</label>
+            <input type="text" id="reqProductName" placeholder="e.g. Gaming Mouse"
+                   class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500">Quantity</label>
+            <input type="number" id="reqQuantity" placeholder="e.g. 100"
+                   class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500">Price Unit</label>
+            <select id="reqUnit"
+                    class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition bg-white">
+              <option value="piece">Per Piece</option>
+              <option value="kg">Per Kg</option>
+              <option value="gram">Per Gram</option>
+              <option value="litre">Per Litre</option>
+              <option value="box">Per Box</option>
+              <option value="pack">Per Pack</option>
+              <option value="set">Per Set</option>
+              <option value="meter">Per Meter</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500">Target Price (₹)</label>
+            <input type="number" id="reqPrice" placeholder="Expected price"
+                   class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-xs font-semibold text-gray-500">Categories</label>
+          <div id="reqCategoryContainer"></div>
+        </div>
+
+        <div class="flex flex-col gap-1.5 mb-5">
+          <label class="text-xs font-semibold text-gray-500">Description</label>
+          <textarea id="reqDescription" rows="3" placeholder="Specific requirements, brand preferences, delivery deadlines..."
+                    class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition resize-none"></textarea>
+        </div>
+
+        <button onclick="postRequirement()"
+                class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-sm transition">
+          Submit Requirement <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       FOOTER
+       ════════════════════════════════════════════════════════ -->
+  <footer class="bg-navy text-white pt-14 pb-6 px-4">
+    <div class="max-w-7xl mx-auto">
+      <!-- Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+        <!-- Brand -->
+        <div class="sm:col-span-2 lg:col-span-1">
+          <a href="index.html" class="flex items-center gap-2 mb-3">
+            <img src="/img/logo.png" alt="NexTrade Logo" class="w-8 h-8 object-contain">
+            <span class="font-bold text-lg">Nex<span class="text-primary-light">Trade</span></span>
+          </a>
+          <p class="text-slate-400 text-sm max-w-xs leading-relaxed">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <h3 class="text-sky-400 font-semibold text-sm mb-4">Company</h3>
+          <ul class="flex flex-col gap-2.5">
+            <li><a href="about.html"   class="text-slate-300 hover:text-sky-400 text-sm transition">About Us</a></li>
+            <li><a href="careers.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Careers</a></li>
+            <li><a href="blog.html"    class="text-slate-300 hover:text-sky-400 text-sm transition">Blog</a></li>
+          </ul>
+        </div>
+
+        <!-- Resources -->
+        <div>
+          <h3 class="text-sky-400 font-semibold text-sm mb-4">Resources</h3>
+          <ul class="flex flex-col gap-2.5">
+            <li><a href="help-center.html"      class="text-slate-300 hover:text-sky-400 text-sm transition">Help Center</a></li>
+            <li><a href="wholesaler-guide.html"  class="text-slate-300 hover:text-sky-400 text-sm transition">Wholesaler Guide</a></li>
+            <li><a href="shopkeeper-guide.html"  class="text-slate-300 hover:text-sky-400 text-sm transition">Shopkeeper Guide</a></li>
+            <li><a href="faq.html"               class="text-slate-300 hover:text-sky-400 text-sm transition">FAQs</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h3 class="text-sky-400 font-semibold text-sm mb-4">Legal</h3>
+          <ul class="flex flex-col gap-2.5">
+            <li><a href="privacy.html"       class="text-slate-300 hover:text-sky-400 text-sm transition">Privacy Policy</a></li>
+            <li><a href="terms.html"         class="text-slate-300 hover:text-sky-400 text-sm transition">Terms of Service</a></li>
+            <li><a href="security.html"      class="text-slate-300 hover:text-sky-400 text-sm transition">Security</a></li>
+            <li><a href="cookie-policy.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Cookie Policy</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bottom -->
+      <div class="border-t border-slate-700 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+        <p class="text-slate-400">© 2023 NexTrade. All rights reserved.</p>
+        <div class="flex gap-4">
+          <a href="#" aria-label="Facebook" class="text-slate-400 hover:text-sky-400 text-lg transition"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Twitter"  class="text-slate-400 hover:text-sky-400 text-lg transition"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="LinkedIn" class="text-slate-400 hover:text-sky-400 text-lg transition"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" aria-label="Instagram"class="text-slate-400 hover:text-sky-400 text-lg transition"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"><span id="toastMsg"></span></div>
+
+  <!-- ── Scripts ───────────────────────────────────────────── -->
+  <script src="js/main.js"></script>
+
+  <!-- GSAP (preserved exactly) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"
+          integrity="sha512-f6bQMg6nkSRw/xfHw5BCbISe/dJjXrVGfz9BSDwhZtiErHwk7ifbmBEtF9vFW8UNIQPhV2uEFVyI/UHob9r7Cw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/ScrollTrigger.min.js"
+          integrity="sha512-AcqPGqrrAEtEwe+ADO5R8RbdFi7tuU7b/A2cJJH0Im0D18NRk5p5s4B3E5PMuO81KFw0ClN7J5SHVUJz7KOb0A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    // ── MOBILE MENU TOGGLE ──
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('hidden');
+    });
+
+    // ── GSAP ANIMATIONS (preserved exactly) ──
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+          gsap.registerPlugin(ScrollTrigger);
+
+          gsap.from(".nx-hero-text", { opacity: 0, y: 30, duration: 1, ease: "power3.out" });
+          gsap.from(".nx-hero-img-wrap", { opacity: 0, x: 40, duration: 1, delay: 0.2, ease: "power3.out" });
+
+          gsap.utils.toArray('.gsap-fade').forEach(el => {
+            gsap.from(el, { scrollTrigger: { trigger: el, start: "top 80%" }, opacity: 0, y: 30, duration: 0.8 });
+          });
+          gsap.utils.toArray('.gsap-fade-up').forEach(el => {
+            gsap.from(el, { scrollTrigger: { trigger: el, start: "top 85%" }, opacity: 0, y: 40, duration: 0.8 });
+          });
+          gsap.utils.toArray('.gsap-scale').forEach(el => {
+            gsap.from(el, { scrollTrigger: { trigger: el, start: "top 85%" }, opacity: 0, scale: 0.9, duration: 0.8 });
+          });
+        }
+      }, 100);
+    });
+  </script>
+
+  <!-- AI Chatbot -->
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="/chatbot.js"></script>
+
+</body>
+</html>

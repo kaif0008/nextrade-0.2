@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NexTrade | Wholesaler Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:        '#4361ee',
+            'primary-dark': '#3f37c9',
+            'primary-light':'#4895ef',
+            danger:         '#ef233c',
+            success:        '#2bc155',
+            navy:           '#0f172a',
+          },
+          fontFamily: { sans: ['Poppins', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Sidebar & dist-item used by JS template strings */
+    .dist-item { margin-bottom: 14px; }
+    .dist-label { display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px; font-weight:500; }
+    .dist-bar-bg { width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden; }
+    /* Chat items injected by JS */
+    .chat-item { display:flex; align-items:center; gap:12px; padding:12px; border-radius:10px; background:#f8fafc; transition:all .3s; cursor:pointer; text-decoration:none; color:inherit; }
+    .chat-item:hover { background:rgba(67,97,238,.06); transform:translateX(4px); }
+    .chat-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:600; flex-shrink:0; }
+    .chat-content { flex:1; overflow:hidden; }
+    .chat-name { font-size:14px; font-weight:600; display:flex; justify-content:space-between; margin-bottom:3px; }
+    .chat-time { font-size:11px; color:#8d99ae; }
+    .chat-msg { font-size:13px; color:#8d99ae; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    /* Notif items injected by JS */
+    .notif-item { padding:12px 15px; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:10px; transition:.2s; }
+    .notif-item:hover { background:#f8fafc; }
+    .notif-icon { width:30px; height:30px; border-radius:8px; background:rgba(239,35,60,.1); color:#ef233c; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen overflow-x-hidden font-sans">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div id="sidebarOverlay"
+       class="fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300"></div>
+
+  <!-- ════════════ SIDEBAR ════════════ -->
+  <aside id="sidebar"
+         class="sidebar fixed left-0 top-0 w-64 h-screen bg-white shadow-md z-[100] -translate-x-full lg:translate-x-0 flex flex-col p-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10">
+      <a href="index.html" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <button id="closeSidebar" class="text-gray-400 hover:text-gray-700 lg:hidden text-lg focus:outline-none">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Nav Links -->
+    <nav class="flex flex-col gap-1.5 flex-1">
+      <button onclick="go('dashboard')"
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left cursor-pointer border-none bg-primary text-white shadow-sm transition">
+        <i class="fas fa-home w-5 text-center"></i> Dashboard
+      </button>
+      <button onclick="go('products')"
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left cursor-pointer border-none bg-none text-gray-500 hover:bg-primary/5 hover:text-primary transition">
+        <i class="fas fa-box w-5 text-center"></i> My Products
+      </button>
+      <button onclick="go('deals')"
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left cursor-pointer border-none bg-none text-gray-500 hover:bg-primary/5 hover:text-primary transition">
+        <i class="fas fa-handshake w-5 text-center"></i> Deals Record
+      </button>
+      <button onclick="go('messages')"
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left cursor-pointer border-none bg-none text-gray-500 hover:bg-primary/5 hover:text-primary transition">
+        <i class="fas fa-comment-dots w-5 text-center"></i> Messages
+        <span id="msgBadge" class="ml-auto bg-danger text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden">0</span>
+      </button>
+      <button id="navReq" onclick="go('requirements')"
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left cursor-pointer border-none bg-none text-gray-500 hover:bg-primary/5 hover:text-primary transition">
+        <i class="fas fa-list-check w-5 text-center"></i> Requirements
+      </button>
+      <button onclick="go('profile')"
+              class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left cursor-pointer border-none bg-none text-gray-500 hover:bg-primary/5 hover:text-primary transition">
+        <i class="fas fa-user w-5 text-center"></i> Profile
+      </button>
+    </nav>
+
+    <!-- Logout -->
+    <button onclick="logout()"
+            class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm w-full text-left text-danger hover:bg-danger/5 border-none cursor-pointer transition mt-2">
+      <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+    </button>
+  </aside>
+
+  <!-- ════════════ MAIN CONTENT ════════════ -->
+  <main class="ml-0 lg:ml-64 flex-1 p-5 sm:p-7 transition-all duration-300">
+
+    <!-- Topbar -->
+    <header class="flex items-center justify-between mb-7">
+      <div class="flex items-center gap-3">
+        <!-- Hamburger (mobile) -->
+        <button id="openSidebar"
+                class="text-gray-600 hover:text-primary text-xl focus:outline-none lg:hidden">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h1 id="welcomeTitle" class="text-xl font-semibold text-gray-900">
+            <div class="skeleton skeleton-text" style="width:200px;height:22px;"></div>
+          </h1>
+          <p class="text-sm text-gray-400">Here's what's happening with your business today.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Notification Bell -->
+        <div class="relative" id="notifWrapper">
+          <button id="notifBtn"
+                  onclick="document.getElementById('notifDropdown').classList.toggle('active')"
+                  class="relative w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-400 hover:text-primary shadow-sm transition">
+            <i class="fas fa-bell text-lg"></i>
+            <div id="notifBadge"
+                 class="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-danger text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white"
+                 style="display:none;">0</div>
+          </button>
+          <!-- Notif Dropdown -->
+          <div id="notifDropdown"
+               class="absolute right-0 top-[120%] w-72 bg-white shadow-lg rounded-xl z-[1000] hidden border border-gray-100 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 font-semibold text-sm text-gray-700">
+              Low Stock Alerts
+            </div>
+            <div id="notifList" class="max-h-72 overflow-y-auto">
+              <p class="text-center p-4 text-gray-400 text-xs">No alerts</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- User pill -->
+        <div onclick="go('profile')"
+             class="flex items-center gap-2.5 bg-white px-3 py-2 rounded-full shadow-sm cursor-pointer hover:shadow-md transition">
+          <div class="text-right hidden sm:block">
+            <div id="topName" class="text-sm font-semibold text-gray-900 leading-none">User</div>
+            <div class="text-xs text-primary font-medium mt-0.5">Wholesaler</div>
+          </div>
+          <div id="topAvatar"
+               class="w-9 h-9 rounded-full bg-primary-light text-white flex items-center justify-center font-bold text-sm">U</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Section Label -->
+    <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Inventory Analytics</h2>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <!-- Total Products -->
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-purple-50 text-purple-600">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <div>
+          <h3 id="statTotalProducts" class="text-2xl font-bold text-gray-900">
+            <div class="skeleton skeleton-text short" style="height:26px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Total Products</p>
+        </div>
+      </div>
+      <!-- Low Stock -->
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-red-50 text-danger">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div>
+          <h3 id="statLowStock" class="text-2xl font-bold text-gray-900">
+            <div class="skeleton skeleton-text short" style="height:26px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Low Stock Items</p>
+        </div>
+      </div>
+      <!-- Most Sold -->
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-amber-50 text-amber-500">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="overflow-hidden">
+          <h3 id="statMostSold" class="text-lg font-bold text-gray-900 truncate max-w-[120px]">
+            <div class="skeleton skeleton-text short" style="height:20px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Most Sold Product</p>
+        </div>
+      </div>
+      <!-- Messages -->
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-green-50 text-success">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div>
+          <h3 id="statMessages" class="text-2xl font-bold text-gray-900">
+            <div class="skeleton skeleton-text short" style="height:26px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Conversations</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deals Analytics -->
+    <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 mt-2">Deals Analytics</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition cursor-pointer" onclick="go('deals')">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-primary/10 text-primary">
+          <i class="fas fa-handshake"></i>
+        </div>
+        <div>
+          <h3 id="statTotalDeals" class="text-2xl font-bold text-gray-900">
+            <div class="skeleton skeleton-text short" style="height:26px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Total Deals</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition cursor-pointer" onclick="go('deals')">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-amber-50 text-amber-500">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div>
+          <h3 id="statPendingDeals" class="text-2xl font-bold text-gray-900">
+            <div class="skeleton skeleton-text short" style="height:26px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Pending Actions</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition cursor-pointer" onclick="go('deals')">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-green-50 text-success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div>
+          <h3 id="statCompletedDeals" class="text-2xl font-bold text-gray-900">
+            <div class="skeleton skeleton-text short" style="height:26px;"></div>
+          </h3>
+          <p class="text-sm text-gray-400">Completed Deals</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demand Insights -->
+    <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 mt-2">📊 Demand Insights</h2>
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold text-gray-900">Product Demand Insights</h2>
+        <span class="text-xs text-gray-400">AI-Powered · Updated on load</span>
+      </div>
+      <div id="demandInsightsList">
+        <!-- Skeleton -->
+        <div class="flex gap-3 items-center py-3 border-b border-gray-50">
+          <div class="skeleton" style="width:44px;height:44px;border-radius:8px;flex-shrink:0;"></div>
+          <div class="flex-1">
+            <div class="skeleton skeleton-text" style="margin-bottom:6px;"></div>
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+          <div class="skeleton" style="width:80px;height:26px;border-radius:20px;"></div>
+        </div>
+        <div class="flex gap-3 items-center py-3">
+          <div class="skeleton" style="width:44px;height:44px;border-radius:8px;flex-shrink:0;"></div>
+          <div class="flex-1">
+            <div class="skeleton skeleton-text" style="margin-bottom:6px;"></div>
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+          <div class="skeleton" style="width:80px;height:26px;border-radius:20px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+
+      <!-- Left Column -->
+      <div class="flex flex-col gap-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <a href="product-management.html"
+               class="flex flex-col items-center gap-2 p-5 bg-gray-50 hover:bg-primary hover:text-white text-gray-700 rounded-xl border border-gray-100 transition group text-sm font-medium">
+              <i class="fas fa-plus-circle text-2xl text-primary group-hover:text-white transition"></i>
+              Add Product
+            </a>
+            <a href="product-management.html"
+               class="flex flex-col items-center gap-2 p-5 bg-gray-50 hover:bg-primary hover:text-white text-gray-700 rounded-xl border border-gray-100 transition group text-sm font-medium">
+              <i class="fas fa-tasks text-2xl text-primary group-hover:text-white transition"></i>
+              Manage Products
+            </a>
+          </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold text-gray-900">Recent Messages</h2>
+            <a href="messages.html" class="text-xs text-primary font-medium hover:underline">View All</a>
+          </div>
+          <div class="flex flex-col gap-3" id="recentChats">
+            <!-- Skeleton -->
+            <div class="chat-item">
+              <div class="skeleton skeleton-circle"></div>
+              <div class="chat-content">
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text short"></div>
+              </div>
+            </div>
+            <div class="chat-item">
+              <div class="skeleton skeleton-circle"></div>
+              <div class="chat-content">
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text short"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="flex flex-col gap-6">
+        <!-- Stock Distribution -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="font-semibold text-gray-900 mb-4">Stock Distribution</h2>
+          <div id="stockDistribution">
+            <div class="skeleton skeleton-text" style="height:18px;margin-bottom:14px;"></div>
+            <div class="skeleton skeleton-text short" style="height:18px;"></div>
+          </div>
+        </div>
+
+        <!-- Profile Preview -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 text-center">
+          <h2 class="font-semibold text-gray-900 mb-5">Profile Preview</h2>
+          <div id="mainAvatar"
+               class="w-20 h-20 rounded-full bg-primary text-white text-3xl font-bold flex items-center justify-center mx-auto mb-4 shadow-md">W</div>
+          <div class="flex items-center justify-center gap-1.5 mb-1">
+            <span id="mainName" class="font-semibold text-gray-900">Loading...</span>
+            <i class="fas fa-check-circle text-success text-sm" id="verifiedBadge" title="Verified Wholesaler" style="display:none;"></i>
+          </div>
+          <div id="profileRoleStr"
+               class="inline-block text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full mb-5">
+            🏢 Wholesaler
+          </div>
+          <a href="profile.html"
+             class="inline-block border border-primary text-primary text-sm font-medium px-5 py-2 rounded-full hover:bg-primary hover:text-white transition">
+            Edit Profile
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    /* ═══════════════════════════════════════════════════
+       ALL JAVASCRIPT BELOW IS IDENTICAL TO THE ORIGINAL
+       ═══════════════════════════════════════════════════ */
+    const user  = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if (!user || !token) location.href = "login.html";
+    if (user.role !== "wholesaler") location.href = "dashboard.html";
+
+    const sidebar = document.getElementById("sidebar");
+    const openBtn = document.getElementById("openSidebar");
+    const closeBtn = document.getElementById("closeSidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    function toggleSidebar() {
+      sidebar.classList.toggle("active");
+      overlay.classList.toggle("hidden");
+    }
+
+    openBtn.addEventListener("click", toggleSidebar);
+    closeBtn.addEventListener("click", toggleSidebar);
+    overlay.addEventListener("click", toggleSidebar);
+
+    function go(p){
+      if(p === "dashboard")    location.href = "wholesaler-dashboard.html";
+      if(p === "products")     location.href = "product-management.html";
+      if(p === "deals")        location.href = "deals-record.html";
+      if(p === "messages")     location.href = "messages.html";
+      if(p === "profile")      location.href = "profile.html";
+      if(p === "requirements") location.href = "requirements.html";
+    }
+
+    function logout(){
+      localStorage.clear();
+      location.href = "login.html";
+    }
+
+    document.getElementById("welcomeTitle").innerText = "Welcome back, " + user.name.split(" ")[0] + "!";
+    document.getElementById("topName").innerText = user.name;
+    document.getElementById("mainName").innerText = user.name;
+
+    const initial = user.name.charAt(0).toUpperCase();
+    document.getElementById("topAvatar").innerText = initial;
+    document.getElementById("mainAvatar").innerText = initial;
+
+    const isValid = (val) => val && typeof val === 'string' && val.trim() !== "";
+    const isProfileComplete =
+      isValid(user.name) && isValid(user.mobileNumber) &&
+      isValid(user.businessName) && isValid(user.gstNumber) &&
+      isValid(user.houseNo) && isValid(user.pincode);
+
+    if (isProfileComplete) {
+      document.getElementById("verifiedBadge").style.display = "inline-block";
+      document.getElementById("profileRoleStr").innerText = "🏢 Verified Wholesaler";
+    }
+
+    window.addEventListener('click', function(e) {
+      if (!document.getElementById('notifWrapper').contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('active');
+      }
+    });
+
+    // Notif dropdown toggle helper
+    document.getElementById('notifDropdown').classList.toggle = (function(orig){
+      return function(cls){
+        if (cls === 'active') this.classList.toggle('hidden');
+        else orig.call(this, cls);
+      }
+    })(document.getElementById('notifDropdown').classList.toggle);
+
+    async function loadData() {
+      try {
+        const aRes = await fetch('/api/analytics/inventory', {headers:{Authorization:`Bearer ${token}`}});
+        const aData = await aRes.json();
+
+        if (aData.success && aData.analytics) {
+          const an = aData.analytics;
+          document.getElementById("statTotalProducts").innerText = an.totalProducts;
+          document.getElementById("statLowStock").innerText = an.lowStockCount;
+
+          if (an.mostSoldProduct) {
+            document.getElementById("statMostSold").innerText = an.mostSoldProduct.name;
+            document.getElementById("statMostSold").title = an.mostSoldProduct.name + " (" + an.mostSoldProduct.count + " sold)";
+          } else {
+            document.getElementById("statMostSold").innerText = "None yet";
+          }
+
+          let distHtml = '';
+          let totalItems = 0;
+          for(let cat in an.stockDistribution) { totalItems += an.stockDistribution[cat]; }
+
+          const distColors = ['#4361ee', '#2bc155', '#f72585', '#7209b7', '#fca311'];
+          let colorIdx = 0;
+
+          for(let cat in an.stockDistribution) {
+            const count = an.stockDistribution[cat];
+            const pct = totalItems > 0 ? (count / totalItems) * 100 : 0;
+            const color = distColors[colorIdx % distColors.length];
+            colorIdx++;
+
+            distHtml += `
+              <div class="dist-item">
+                <div class="dist-label"><span>${cat}</span> <span>${count}</span></div>
+                <div class="dist-bar-bg">
+                  <div class="dist-bar-fill" style="width: ${pct}%; background: ${color};"></div>
+                </div>
+              </div>`;
+          }
+          if(!distHtml) distHtml = '<p style="color:#888;font-size:13px;">No stock data yet.</p>';
+          document.getElementById("stockDistribution").innerHTML = distHtml;
+
+          if (an.lowStockItems && an.lowStockItems.length > 0) {
+            document.getElementById("notifBadge").innerText = an.lowStockItems.length;
+            document.getElementById("notifBadge").style.display = 'flex';
+
+            let alertsHtml = '';
+            an.lowStockItems.forEach(item => {
+              alertsHtml += `
+                <div class="notif-item" onclick="go('products')">
+                  <div class="notif-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                  <div style="flex:1;">
+                    <div style="font-size:13px;font-weight:600;">${item.name}</div>
+                    <div style="font-size:11px;color:#888;">Stock remaining: ${item.stock} ${item.forecastDays >= 0 ? `<span style="color:#e36414; margin-left:8px;">✨ AI Forecast: ~${item.forecastDays} days</span>` : ''}</div>
+                  </div>
+                </div>`;
+            });
+            document.getElementById("notifList").innerHTML = alertsHtml;
+          }
+        }
+
+        try {
+          const dealsRes = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+          const dealsData = await dealsRes.json();
+          if (dealsData.success) {
+            const allDeals = dealsData.deals;
+            document.getElementById('statTotalDeals').innerText = allDeals.length;
+            document.getElementById('statPendingDeals').innerText = allDeals.filter(d => d.status === 'pending' || d.status === 'wholesaler_updated').length;
+            document.getElementById('statCompletedDeals').innerText = allDeals.filter(d => d.status === 'confirmed').length;
+          }
+        } catch (e) { console.error('Error fetching deals', e); }
+
+        const unreadRes = await fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } });
+        const unreadData = await unreadRes.json();
+        const msgBadge = document.getElementById("msgBadge");
+        if (unreadData.success && unreadData.count > 0) {
+          msgBadge.innerText = unreadData.count;
+          msgBadge.style.display = "inline-block";
+        } else {
+          msgBadge.style.display = "none";
+        }
+
+        const cRes = await fetch('/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
+        const cData = await cRes.json();
+        const conversations = cData.conversations || [];
+        document.getElementById("statMessages").innerText = conversations.length;
+
+        const chatContainer = document.getElementById("recentChats");
+        if(conversations.length === 0) {
+          chatContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: #8d99ae;">No recent messages</div>`;
+        } else {
+          let chatHTML = '';
+          conversations.slice(0, 3).forEach(conv => {
+            const cu = conv.user;
+            if (!cu) return;
+            const chatInitial = cu.name.charAt(0).toUpperCase();
+            const colors = ['#4361ee', '#2bc155', '#7209b7', '#f72585', '#e36414'];
+            const bg = colors[cu.name.length % colors.length];
+            chatHTML += `
+            <a href="messages.html" class="chat-item">
+              <div class="chat-avatar" style="background:${bg}">${chatInitial}</div>
+              <div class="chat-content">
+                <div class="chat-name">
+                  <span>${cu.businessName || cu.name}</span>
+                  <span class="chat-time">Recent</span>
+                </div>
+                <div class="chat-msg">Click to view conversation...</div>
+              </div>
+            </a>`;
+          });
+          chatContainer.innerHTML = chatHTML;
+        }
+
+      } catch (err) {
+        console.error("Error loading dashboard data:", err);
+      }
+    }
+
+    setTimeout(loadData, 500);
+    setTimeout(loadDemandInsights, 700);
+
+    async function loadDemandInsights() {
+      try {
+        const res = await fetch('/api/demand-insights', { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        const container = document.getElementById('demandInsightsList');
+        if (!data.success || !data.insights || data.insights.length === 0) {
+          container.innerHTML = `<div style="text-align:center;padding:30px;color:#8d99ae;font-size:13px;">No products found. <a href="product-management.html" style="color:#4361ee;">Add products</a> to see demand insights.</div>`;
+          return;
+        }
+
+        const demandConfig = {
+          high:   { emoji: '🔥', label: 'High Demand',   bg: 'rgba(239,35,60,0.1)',  color: '#ef233c', actionBg: 'rgba(239,35,60,0.08)',  actionColor: '#ef233c' },
+          medium: { emoji: '⚡', label: 'Medium Demand', bg: 'rgba(245,158,11,0.1)', color: '#d97706', actionBg: 'rgba(245,158,11,0.08)', actionColor: '#d97706' },
+          low:    { emoji: '💤', label: 'Low Demand',    bg: 'rgba(148,163,184,0.12)', color: '#64748b', actionBg: 'rgba(148,163,184,0.1)', actionColor: '#64748b' }
+        };
+        const trendColors = { increasing: '#10b981', stable: '#94a3b8', decreasing: '#ef233c' };
+
+        let html = data.insights.slice(0, 8).map(item => {
+          const cfg = demandConfig[item.demandLevel] || demandConfig.low;
+          const tColor = trendColors[item.trend] || '#94a3b8';
+          const scoreWidth = Math.max(item.demandScore, 4);
+          const scoreColor = item.demandLevel === 'high' ? '#ef233c' : item.demandLevel === 'medium' ? '#f59e0b' : '#94a3b8';
+          const imgEl = item.image
+            ? `<img src="${item.image}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;">`
+            : `<div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#4361ee;flex-shrink:0;">${(item.name||'P').charAt(0)}</div>`;
+          return `
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #f8fafc;">
+              ${imgEl}
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                  <span style="font-weight:600;font-size:14px;color:#0f172a;">${item.name}</span>
+                  <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${cfg.bg};color:${cfg.color};font-weight:700;">${cfg.emoji} ${cfg.label}</span>
+                </div>
+                <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">Stock: ${item.stock} units · Sold: ${item.soldCount} units</div>
+                <div style="height:4px;background:#f1f5f9;border-radius:4px;margin-bottom:8px;overflow:hidden;">
+                  <div style="height:100%;width:${scoreWidth}%;background:${scoreColor};border-radius:4px;transition:width 0.6s ease;"></div>
+                </div>
+                <div style="display:flex;gap:14px;flex-wrap:wrap;">
+                  <span style="font-size:11px;color:#64748b;">📦 ${item.confirmedDeals} deals</span>
+                  <span style="font-size:11px;color:#64748b;">💬 ${item.inquiries} inquiries</span>
+                  <span style="font-size:11px;color:#64748b;">📋 ${item.requirements} requirements</span>
+                  <span style="font-size:11px;color:${tColor};font-weight:600;">${item.trendLabel}</span>
+                </div>
+              </div>
+              <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <span style="font-size:11px;padding:4px 10px;border-radius:20px;background:${cfg.actionBg};color:${cfg.actionColor};font-weight:600;white-space:nowrap;">${item.suggestedAction}</span>
+                <span style="font-size:10px;color:#94a3b8;">Score: ${item.demandScore}/100</span>
+              </div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = html || `<div style="text-align:center;padding:30px;color:#8d99ae;">No demand data yet.</div>`;
+      } catch(e) {
+        console.error('Demand insights failed:', e);
+        document.getElementById('demandInsightsList').innerHTML = `<div style="text-align:center;padding:20px;color:#8d99ae;">Could not load demand insights.</div>`;
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      if(window.innerWidth > 1024) {
+        sidebar.classList.remove('active');
+        overlay.classList.add('hidden');
+      }
+    });
+
+    function showToast(msg, type = 'info') {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+        document.body.appendChild(container);
+      }
+      const colors = { success: '#10b981', error: '#ef233c', info: '#4361ee' };
+      const toast = document.createElement('div');
+      toast.style.cssText = 'background:white;border-left:4px solid ' + colors[type] + ';padding:12px 16px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:240px;cursor:pointer;';
+      toast.innerHTML = `<i class="fas fa-comment-dots" style="color:${colors[type]}"></i><span>${msg}</span>`;
+      toast.onclick = () => location.href = 'messages.html';
+      container.appendChild(toast);
+      setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(), 300); }, 4000);
+    }
+
+    const socket = io();
+    socket.emit("register", user._id);
+    socket.on("receive_message", (data) => {
+      if (data.receiverId === user._id) {
+        showToast(`New message from ${data.senderName || 'someone'}`, 'info');
+        fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } })
+          .then(res => res.json())
+          .then(d => {
+            const badge = document.getElementById("msgBadge");
+            if (d.success && d.count > 0) {
+              badge.innerText = d.count;
+              badge.style.display = "inline-block";
+            }
+          });
+      }
+    });
+  </script>
+
+  <!-- AI Chatbot -->
+  <script src="/chatbot.js"></script>
+</body>
+</html>

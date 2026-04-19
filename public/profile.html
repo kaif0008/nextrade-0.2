@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | NexTrade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="categories.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={theme:{extend:{colors:{primary:'#4361ee','primary-dark':'#3f37c9','primary-light':'#4895ef',danger:'#ef233c',success:'#2bc155',warning:'#f39c12'},fontFamily:{sans:['Poppins','sans-serif']}}}};
+  </script>
+
+  <!-- Profile-specific CSS (all classes used by JS logic — DO NOT convert to Tailwind utilities) -->
+  <style>
+    :root{--primary:#4361ee;--primary-light:#4895ef;--primary-hover:#3f37c9;--danger:#ef233c;--success:#2bc155;--warning:#f39c12;--text-main:#2b2d42;--text-muted:#8d99ae;--shadow-sm:0 2px 10px rgba(0,0,0,.05);--shadow-md:0 5px 15px rgba(0,0,0,.08);--border-radius:12px;}
+
+    /* Nav links injected by JS into #sidebarNavs */
+    .nav-link{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--border-radius);color:var(--text-muted);text-decoration:none;font-weight:500;transition:all .3s;border:none;background:none;width:100%;text-align:left;cursor:pointer;font-size:14px;font-family:'Poppins',sans-serif;}
+    .nav-link i{font-size:16px;width:20px;text-align:center;}
+    .nav-link:hover{background:rgba(67,97,238,.05);color:var(--primary);}
+    .nav-link.active{background:var(--primary);color:white;box-shadow:var(--shadow-sm);}
+    .nav-link.active i{color:white;}
+    .message-badge{background:var(--danger);color:white;font-size:11px;padding:2px 6px;border-radius:10px;margin-left:auto;font-weight:600;}
+    .logout-btn{color:var(--danger)!important;}
+    .logout-btn:hover{background:rgba(239,35,60,.05)!important;color:var(--danger)!important;}
+
+    /* Progress card */
+    .progress-card{background:white;border-radius:var(--border-radius);padding:22px 28px;margin-bottom:24px;box-shadow:var(--shadow-sm);}
+    .progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+    .progress-title{font-size:17px;font-weight:600;display:flex;align-items:center;gap:10px;color:var(--text-main);}
+    .progress-title i{color:var(--success);font-size:20px;}
+    .progress-text{color:var(--text-muted);font-weight:500;font-size:13px;}
+    .progress-bar-bg{height:11px;background:rgba(67,97,238,.1);border-radius:20px;overflow:hidden;}
+    .progress-bar{height:100%;background:linear-gradient(90deg,var(--primary-light),var(--primary));width:0%;transition:width .6s ease;border-radius:20px;}
+
+    /* Card system */
+    .card{background:white;border-radius:var(--border-radius);box-shadow:var(--shadow-sm);overflow:hidden;transition:all .3s;border:2px solid transparent;margin-bottom:22px;}
+    .card.editing{border-color:rgba(67,97,238,.4);box-shadow:var(--shadow-md);}
+    .card-header{padding:22px 24px;border-bottom:1px solid rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center;}
+    .card-title{font-size:18px;font-weight:600;display:flex;align-items:center;gap:12px;}
+    .card-title i{color:var(--primary);background:rgba(67,97,238,.1);padding:9px;border-radius:10px;width:38px;text-align:center;height:38px;display:flex;align-items:center;justify-content:center;}
+    .edit-btn{background:rgba(67,97,238,.1);color:var(--primary);border:none;padding:8px 18px;border-radius:10px;font-weight:600;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:8px;font-size:13px;font-family:'Poppins',sans-serif;}
+    .edit-btn:hover{background:var(--primary);color:white;transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+    .save-btn{background:var(--primary);color:white;border:none;padding:8px 22px;border-radius:10px;font-weight:600;cursor:pointer;transition:all .3s;display:none;align-items:center;gap:8px;font-size:13px;font-family:'Poppins',sans-serif;}
+    .save-btn:hover{background:var(--primary-hover);transform:translateY(-2px);}
+    .card-body{padding:24px;}
+
+    /* Avatar section */
+    .avatar-section{display:flex;align-items:center;gap:22px;margin-bottom:24px;}
+    .avatar-container{width:88px;height:88px;border-radius:50%;background:rgba(67,97,238,.1);position:relative;display:flex;justify-content:center;align-items:center;overflow:hidden;box-shadow:var(--shadow-sm);}
+    .avatar-container i{font-size:34px;color:var(--text-muted);}
+    .avatar-container img{width:100%;height:100%;object-fit:cover;display:none;}
+    .upload-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:white;text-align:center;font-size:11px;padding:5px;cursor:pointer;display:none;font-weight:500;transition:all .3s;}
+    .upload-overlay:hover{background:var(--primary);}
+    .card.editing .upload-overlay{display:block;}
+    .avatar-info h3{font-size:19px;font-weight:700;margin-bottom:4px;color:var(--text-main);}
+    .avatar-info p{color:var(--primary);background:rgba(67,97,238,.1);padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;text-transform:capitalize;}
+
+    /* Business gallery */
+    .business-photo-section{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
+    .business-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:14px;}
+    .photo-slot{aspect-ratio:4/3;border-radius:var(--border-radius);background:#f1f5f9;border:2px dashed #cbd5e1;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden;transition:all .3s;}
+    .photo-slot.has-image{border:2px solid transparent;box-shadow:var(--shadow-sm);}
+    .photo-slot.primary{border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.2);}
+    .photo-slot i.placeholder-icon{font-size:28px;color:#94a3b8;}
+    .photo-slot img{width:100%;height:100%;object-fit:cover;}
+    .slot-controls{position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;gap:10px;backdrop-filter:blur(2px);z-index:5;}
+    .card.editing .photo-slot.has-image:hover .slot-controls{display:flex;}
+    .slot-btn{width:32px;height:32px;border-radius:50%;background:white;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-main);transition:all .3s;}
+    .slot-btn:hover{transform:scale(1.1);}
+    .slot-btn.primary-btn{color:#f59e0b;}
+    .slot-btn.delete-btn{color:var(--danger);}
+    .primary-badge{position:absolute;top:8px;right:8px;background:var(--primary);color:white;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700;z-index:4;display:none;}
+    .photo-slot.primary .primary-badge{display:block;}
+    .add-photo-label{position:absolute;inset:0;display:none;cursor:pointer;z-index:6;}
+    .card.editing .photo-slot:not(.has-image) .add-photo-label{display:block;}
+
+    /* Form elements */
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;}
+    .form-group{display:flex;flex-direction:column;gap:7px;}
+    .form-label{font-size:13px;font-weight:600;color:var(--text-main);display:flex;justify-content:space-between;align-items:center;}
+    .required-asterisk{color:var(--danger);}
+    .missing-badge{font-size:11px;color:#d35400;background:#fdebd0;padding:3px 8px;border-radius:12px;font-weight:600;display:none;align-items:center;gap:4px;}
+    .missing-badge.active{display:inline-flex;}
+    .form-control{width:100%;padding:11px 14px;background:#f8fafc;border:1px solid rgba(0,0,0,.08);border-radius:var(--border-radius);color:var(--text-main);font-size:14px;font-weight:500;transition:all .3s;font-family:'Poppins',sans-serif;}
+    .form-control:focus{outline:none;border-color:var(--primary);background:#ffffff;box-shadow:0 0 0 4px rgba(67,97,238,.1);}
+    .form-control:disabled{background:transparent;border-color:transparent;color:var(--text-main);padding-left:0;font-weight:600;opacity:1;}
+    .action-group{display:flex;gap:14px;}
+    .action-group .form-control{flex:1;}
+    .action-btn{padding:0 14px;background:white;border:1px solid rgba(0,0,0,.08);border-radius:var(--border-radius);font-weight:600;font-size:13px;color:var(--text-main);cursor:pointer;display:none;white-space:nowrap;transition:all .3s;font-family:'Poppins',sans-serif;}
+    .card.editing .action-btn{display:inline-block;}
+    .action-btn.verify{background:rgba(43,193,85,.1);color:var(--success);border-color:transparent;}
+    .action-btn.verify:hover{background:var(--success);color:white;box-shadow:var(--shadow-sm);}
+    .col-span-full{grid-column:1/-1;}
+    textarea.form-control{resize:vertical;min-height:90px;}
+
+    /* Email verification */
+    .verified-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(43,193,85,.12);color:var(--success);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;margin-left:7px;}
+    .unverified-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(239,35,60,.1);color:var(--danger);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;margin-left:7px;}
+    .otp-section{margin-top:11px;padding:15px;background:#f0f4ff;border-radius:12px;border:1px solid rgba(67,97,238,.2);display:none;flex-direction:column;gap:9px;}
+    .otp-section.show{display:flex;}
+    .otp-input-row{display:flex;gap:8px;align-items:center;}
+    .otp-input{width:155px;padding:10px 12px;border-radius:10px;border:2px solid #c7d2fe;font-size:19px;font-weight:700;letter-spacing:6px;text-align:center;outline:none;background:white;color:var(--primary);transition:all .3s;}
+    .otp-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.15);}
+    .otp-verify-btn{padding:10px 18px;background:var(--primary);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:13px;transition:all .3s;font-family:'Poppins',sans-serif;}
+    .otp-verify-btn:hover{background:var(--primary-hover);}
+    .otp-resend-btn{background:none;border:none;color:var(--primary);font-size:12px;cursor:pointer;font-weight:600;padding:0;text-decoration:underline;font-family:'Poppins',sans-serif;}
+    .otp-resend-btn:disabled{color:var(--text-muted);cursor:not-allowed;text-decoration:none;}
+
+    /* Toast notification */
+    .notification{position:fixed;bottom:28px;right:28px;background:var(--text-main);padding:14px 22px;border-radius:14px;display:flex;align-items:center;gap:14px;transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.68,-.55,.265,1.55);z-index:2000;font-weight:500;color:white;font-size:14px;}
+    .notification.show{transform:translateY(0);opacity:1;}
+    .notification.success{border-left:5px solid var(--success);}
+    .notification.error{border-left:5px solid var(--danger);}
+    .notification.success i{color:var(--success);font-size:17px;}
+    .notification.error i{color:var(--danger);font-size:17px;}
+
+    /* Loader */
+    .loader-overlay{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(5px);display:flex;justify-content:center;align-items:center;z-index:3000;display:none;}
+    .spinner{width:48px;height:48px;border:4px solid #f0f2f8;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin{100%{transform:rotate(360deg);}}
+
+    /* Sidebar overlay */
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;}
+    .sidebar-overlay.active{display:block;}
+
+    @media(max-width:768px){
+      .form-grid{grid-template-columns:1fr;}
+      .avatar-section{flex-direction:column;text-align:center;}
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen font-sans overflow-x-hidden">
+
+  <!-- Loader -->
+  <div class="loader-overlay" id="loader"><div class="spinner"></div></div>
+
+  <!-- Sidebar Mobile Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside id="sidebar"
+         class="fixed left-0 top-0 w-64 h-screen bg-white shadow-md z-[100] flex flex-col p-6 -translate-x-full lg:translate-x-0 transition-transform duration-300">
+    <div class="flex items-center justify-between mb-10">
+      <a href="#" id="logoLink" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <button id="closeSidebar" class="text-gray-400 hover:text-gray-700 text-xl lg:hidden border-none bg-transparent cursor-pointer"><i class="fas fa-times"></i></button>
+    </div>
+    <!-- JS populates this based on user role -->
+    <nav class="flex flex-col gap-1 flex-1" id="sidebarNavs"></nav>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="ml-0 lg:ml-64 flex-1 p-5 sm:p-8 transition-all duration-300">
+
+    <!-- Topbar -->
+    <header class="flex items-center justify-between mb-7">
+      <div class="flex items-center gap-3">
+        <button id="mobileToggleBtn" class="text-gray-600 hover:text-primary text-xl lg:hidden border-none bg-transparent cursor-pointer"><i class="fas fa-bars"></i></button>
+        <div>
+          <h1 class="text-xl font-semibold text-gray-900">My Profile</h1>
+          <p class="text-sm text-gray-400">Manage your account details and business information</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Progress Card -->
+    <div class="progress-card">
+      <div class="progress-header">
+        <div class="progress-title"><i class="fas fa-shield-alt"></i> Profile Completion Status</div>
+        <div class="progress-text" id="progressText">0/3 Sections Complete</div>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+
+    <!-- Profile Sections -->
+    <div class="profile-layout">
+
+      <!-- 1. Personal Information -->
+      <div class="card" id="cardProfile">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-user"></i> Personal Information</div>
+          <button class="edit-btn" onclick="toggleEdit('cardProfile')"><i class="fas fa-pen"></i> Edit</button>
+          <button class="save-btn" onclick="saveSection('cardProfile')"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="card-body">
+          <div class="avatar-section">
+            <div class="avatar-container">
+              <i class="fas fa-camera"></i>
+              <img src="" id="profileImgPreview" alt="Profile">
+              <label for="photoUpload" class="upload-overlay">Change Photo</label>
+              <input type="file" id="photoUpload" style="display:none;" accept="image/*">
+            </div>
+            <div class="avatar-info">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 id="displayProfileName">Loading...</h3>
+                <i class="fas fa-check-circle" id="profileVerifiedBadge" title="Verified" style="display:none;color:var(--success);font-size:18px;"></i>
+              </div>
+              <p id="displayProfileRole" style="margin-top:5px;">User</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="required-asterisk">*</span></label>
+              <input type="text" class="form-control" id="profile_name" data-field="name" disabled required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" id="profile_dob" data-field="dob" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <div>Mobile Number <span class="required-asterisk">*</span></div>
+                <span class="missing-badge" id="badge_mobileNumber"><i class="fas fa-exclamation-circle"></i> Missing</span>
+              </label>
+              <div class="action-group">
+                <input type="tel" class="form-control" id="profile_mobileNumber" data-field="mobileNumber" placeholder="10-digit mobile number" disabled>
+              </div>
+            </div>
+            <div class="form-group" id="emailFormGroup">
+              <label class="form-label">
+                <div>
+                  Email Address <span class="required-asterisk">*</span>
+                  <span class="verified-badge" id="emailVerifiedBadge" style="display:none;"><i class="fas fa-check-circle"></i> Verified</span>
+                  <span class="unverified-badge" id="emailUnverifiedBadge" style="display:none;"><i class="fas fa-times-circle"></i> Not Verified</span>
+                </div>
+              </label>
+              <div class="action-group">
+                <input type="email" class="form-control" id="profile_email" data-field="email" disabled required>
+                <button class="action-btn verify" type="button" id="sendOtpBtn" onclick="sendOTP()" style="display:none;">Send OTP</button>
+              </div>
+              <div class="otp-section" id="otpSection">
+                <p style="font-size:13px;color:#475569;margin:0;"><i class="fas fa-envelope" style="color:var(--primary);"></i> Check your email inbox for the 6-digit code.</p>
+                <div class="otp-input-row">
+                  <input type="text" class="otp-input" id="otpInput" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                  <button class="otp-verify-btn" onclick="verifyOTP()">Confirm</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="otp-resend-btn" id="resendBtn" onclick="sendOTP(true)">Resend OTP</button>
+                  <span style="font-size:12px;color:var(--text-muted);" id="otpTimer"></span>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-control" id="profile_gender" data-field="gender" disabled>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Business Details -->
+      <div class="card" id="cardBusiness">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-building"></i> Business Details</div>
+          <button class="edit-btn" onclick="toggleEdit('cardBusiness')"><i class="fas fa-pen"></i> Edit</button>
+          <button class="save-btn" onclick="saveSection('cardBusiness')"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="card-body">
+          <div class="business-photo-section">
+            <label class="form-label">Business Gallery (Max 5 photos)</label>
+            <div class="business-gallery" id="businessGallery"><!-- JS renders slots --></div>
+            <input type="file" id="multiPhotoInput" style="display:none;" accept="image/*">
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+              <i class="fas fa-info-circle"></i> Upload photos of your warehouse, shop, or factory. Select one as your primary banner.
+            </p>
+          </div>
+          <div class="form-grid">
+            <div class="form-group col-span-full">
+              <label class="form-label">
+                <div>Business / Company Name <span class="required-asterisk">*</span></div>
+                <span class="missing-badge" id="badge_businessName"><i class="fas fa-exclamation-circle"></i> Missing</span>
+              </label>
+              <input type="text" class="form-control" id="business_businessName" data-field="businessName" placeholder="E.g. NexTrade Enterprises" disabled required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Type</label>
+              <select class="form-control" id="business_businessType" data-field="businessType" disabled>
+                <option value="">Select Type</option>
+                <option value="Proprietorship">Proprietorship</option>
+                <option value="Partnership">Partnership</option>
+                <option value="Pvt. Ltd.">Pvt. Ltd.</option>
+                <option value="Public Ltd.">Public Ltd.</option>
+                <option value="LLP">LLP</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Industry / Category</label>
+              <select class="form-control" id="business_industry_select" onchange="onIndustrySelectChange()" disabled>
+                <option value="">Select Category</option>
+                <option value="Grocery">Grocery</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Textiles">Textiles</option>
+                <option value="Pharma">Pharma</option>
+                <option value="Hardware">Hardware</option>
+                <option value="FMCG">FMCG</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Food">Food</option>
+                <option value="Automotive">Automotive</option>
+                <option value="Construction">Construction</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Other">Other (Custom)</option>
+              </select>
+              <input type="text" class="form-control" id="business_industry" data-field="industry" placeholder="Enter custom category" style="display:none;margin-top:8px;" disabled>
+            </div>
+            <div class="form-group col-span-full">
+              <label class="form-label">
+                <div>GSTIN Number</div>
+                <span class="missing-badge" id="badge_gstNumber"><i class="fas fa-exclamation-circle"></i> Missing</span>
+              </label>
+              <div class="action-group">
+                <input type="text" class="form-control" id="business_gstNumber" data-field="gstNumber" placeholder="Enter 15 digit GSTIN" disabled>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Year of Establishment</label>
+              <input type="number" class="form-control" id="business_yearOfEstablishment" data-field="yearOfEstablishment" placeholder="YYYY" min="1800" max="2100" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Website URL (Optional)</label>
+              <input type="url" class="form-control" id="business_websiteUrl" data-field="websiteUrl" placeholder="https://..." disabled>
+            </div>
+            <div class="form-group col-span-full">
+              <label class="form-label">Brief Business Description</label>
+              <textarea class="form-control" id="business_businessDescription" data-field="businessDescription" placeholder="Describe your business operations and what you trade..." disabled></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Address Details -->
+      <div class="card" id="cardAddress">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-map-marker-alt"></i> Address Details</div>
+          <button class="edit-btn" onclick="toggleEdit('cardAddress')"><i class="fas fa-pen"></i> Edit</button>
+          <button class="save-btn" onclick="saveSection('cardAddress')"><i class="fas fa-save"></i> Save</button>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group col-span-full">
+              <label class="form-label">
+                <div>House no. / Flat / Building name</div>
+                <span class="missing-badge" id="badge_houseNo"><i class="fas fa-exclamation-circle"></i> Missing</span>
+              </label>
+              <input type="text" class="form-control" id="address_houseNo" data-field="houseNo" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Street / Locality</label>
+              <input type="text" class="form-control" id="address_street" data-field="street" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Block / Sector</label>
+              <input type="text" class="form-control" id="address_block" data-field="block" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <div>Pincode</div>
+                <span class="missing-badge" id="badge_pincode"><i class="fas fa-exclamation-circle"></i> Missing</span>
+              </label>
+              <input type="text" class="form-control" id="address_pincode" data-field="pincode" oninput="autoSuggestCityState()" maxlength="6" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <input type="text" class="form-control" id="address_city" data-field="city" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">District</label>
+              <input type="text" class="form-control" id="address_district" data-field="district" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">State</label>
+              <input type="text" class="form-control" id="address_state" data-field="state" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input type="text" class="form-control" id="address_country" data-field="country" value="India" disabled>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /profile-layout -->
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="notification" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMsg">Changes saved successfully</span>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       ALL ORIGINAL JAVASCRIPT PRESERVED EXACTLY — NO CHANGES MADE
+    ═══════════════════════════════════════════════════════════════════ */
+    let userData = {};
+    const authToken = localStorage.getItem("token");
+    let pincodeTimer = null;
+    let selectedPhotoFile = null;
+    let businessPhotos = [];
+    let primaryPhotoIndex = 0;
+
+    // ================= INIT =================
+    window.onload = () => {
+        if (!authToken) { window.location.href = "login.html"; return; }
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            userData = JSON.parse(storedUser);
+            populateForm();
+            updateProgress();
+            setupDashboardNav();
+        }
+
+        // Sidebar toggle (Tailwind version)
+        const sidebar         = document.getElementById("sidebar");
+        const sidebarOverlay  = document.getElementById("sidebarOverlay");
+        const mobileToggleBtn = document.getElementById("mobileToggleBtn");
+        const closeSidebar    = document.getElementById("closeSidebar");
+
+        function openSB()  { sidebar.classList.remove('-translate-x-full'); sidebarOverlay.classList.add('active'); }
+        function closeSB() { sidebar.classList.add('-translate-x-full');    sidebarOverlay.classList.remove('active'); }
+
+        if (mobileToggleBtn) mobileToggleBtn.addEventListener("click", openSB);
+        if (closeSidebar)    closeSidebar.addEventListener("click", closeSB);
+        if (sidebarOverlay)  sidebarOverlay.addEventListener("click", closeSB);
+    };
+
+    // SETUP NAVIGATION BASED ON ROLE
+    function setupDashboardNav() {
+        const role = (userData.role || "retailer").toLowerCase();
+        const navs = document.getElementById("sidebarNavs");
+        const logo = document.getElementById("logoLink");
+
+        if (role === "retailer") {
+            logo.href = "retailer-dashboard.html";
+            navs.innerHTML = `
+                <button class="nav-link" onclick="location.href='retailer-dashboard.html'"><i class="fas fa-home"></i> Dashboard</button>
+                <button class="nav-link" onclick="location.href='browse-products.html'"><i class="fas fa-store"></i> Explore Products</button>
+                <button class="nav-link" onclick="location.href='wholesalers.html'"><i class="fas fa-search"></i> Wholesalers</button>
+                <button class="nav-link" onclick="location.href='my-requirements.html'"><i class="fas fa-list-check"></i> My Requirements</button>
+                <button class="nav-link" onclick="location.href='deals-record.html'"><i class="fas fa-handshake"></i> Deals Record</button>
+                <button class="nav-link" onclick="location.href='messages.html'"><i class="fas fa-comment-dots"></i> Messages<span class="message-badge" style="display:none;" id="msgBadge">0</span></button>
+                <button class="nav-link active" onclick="location.href='profile.html'"><i class="fas fa-user"></i> Profile</button>
+                <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            `;
+        } else {
+            logo.href = "wholesaler-dashboard.html";
+            navs.innerHTML = `
+                <a href="wholesaler-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="product-management.html" class="nav-link"><i class="fas fa-box"></i> My Products</a>
+                <a href="deals-record.html" class="nav-link"><i class="fas fa-handshake"></i> Deals Record</a>
+                <a href="messages.html" class="nav-link"><i class="fas fa-envelope"></i> Messages</a>
+                <a href="requirements.html" class="nav-link"><i class="fas fa-list-check"></i> Requirements</a>
+                <a href="profile.html" class="nav-link active"><i class="fas fa-user-circle"></i> Profile</a>
+                <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            `;
+        }
+    }
+
+    function logout() { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "login.html"; }
+
+    // ================= POPULATE =================
+    function populateForm() {
+        document.querySelectorAll('.form-control').forEach(input => {
+            const field = input.dataset.field;
+            if (field && userData[field]) input.value = userData[field];
+        });
+
+        const badgeVerified = document.getElementById('emailVerifiedBadge');
+        const badgeUnverified = document.getElementById('emailUnverifiedBadge');
+        const btnSendOtp = document.getElementById('sendOtpBtn');
+        const otpSection = document.getElementById('otpSection');
+
+        if (userData.emailVerified) {
+            if (badgeVerified)   badgeVerified.style.display   = 'inline-flex';
+            if (badgeUnverified) badgeUnverified.style.display = 'none';
+            if (btnSendOtp)      btnSendOtp.style.display      = 'none';
+            if (otpSection)      otpSection.classList.remove('show');
+        } else {
+            if (badgeVerified)   badgeVerified.style.display   = 'none';
+            if (badgeUnverified) badgeUnverified.style.display = 'inline-flex';
+            if (btnSendOtp)      btnSendOtp.style.display      = 'inline-flex';
+        }
+
+        if (userData.photoUrl) {
+            const img = document.getElementById('profileImgPreview');
+            img.src = userData.photoUrl; img.style.display = 'block';
+            const icon = img.previousElementSibling;
+            if (icon) icon.style.display = 'none';
+        }
+
+        businessPhotos  = userData.businessPhotos || [];
+        primaryPhotoIndex = userData.primaryBusinessPhotoIndex || 0;
+        renderGallery();
+
+        document.getElementById("displayProfileName").innerText = userData.name || "User";
+        document.getElementById("displayProfileRole").innerText = (userData.role || "User").toUpperCase();
+
+        if (userData.industry) {
+            const select  = document.getElementById("business_industry_select");
+            const input   = document.getElementById("business_industry");
+            const options = Array.from(select.options || []).map(o => o.value);
+            if (options.includes(userData.industry)) { select.value = userData.industry; input.style.display = 'none'; }
+            else { if (select) select.value = 'Other'; input.value = userData.industry; input.style.display = 'block'; }
+        }
+    }
+
+    function onIndustrySelectChange() {
+        const select = document.getElementById("business_industry_select");
+        const input  = document.getElementById("business_industry");
+        if (select.value === 'Other') { input.style.display='block'; input.value=''; input.focus(); }
+        else { input.style.display='none'; input.value=select.value; }
+    }
+
+    // ================= EDIT =================
+    function toggleEdit(cardId) {
+        const card = document.getElementById(cardId);
+        card.classList.add("editing");
+        card.querySelectorAll(".form-control").forEach(input => { if (input.dataset.field !== "email") input.disabled = false; });
+        card.querySelector(".edit-btn").style.display = "none";
+        card.querySelector(".save-btn").style.display = "inline-flex";
+    }
+
+    // ================= SAVE =================
+    async function saveSection(cardId) {
+        const card = document.getElementById(cardId);
+        const inputs = card.querySelectorAll(".form-control");
+        const formData = new FormData();
+        inputs.forEach(input => { const field = input.dataset.field; if (field && field !== "email") formData.append(field, input.value.trim()); });
+
+        if (cardId === 'cardProfile' && selectedPhotoFile) formData.append('photo', selectedPhotoFile);
+
+        if (cardId === 'cardBusiness') {
+            businessPhotos.forEach((src, index) => {
+                if (src.startsWith('data:')) { const blob = dataURLtoBlob(src); formData.append('businessPhotos', blob, `photo_${index}.jpg`); }
+                else if (src.startsWith('http')) formData.append('existingBusinessPhotos', src);
+            });
+            formData.append('primaryBusinessPhotoIndex', primaryPhotoIndex);
+        }
+
+        const dobVal = formData.get('dob');
+        if (dobVal) {
+            const birthDate = new Date(dobVal), today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            if (age < 18) { showToast("You must be 18 years or older", "error"); return; }
+        }
+
+        try {
+            document.getElementById("loader").style.display = "flex";
+            const res  = await fetch("/api/update-profile", { method:"POST", headers:{"Authorization":`Bearer ${authToken}`}, body:formData });
+            const data = await res.json();
+            if (res.ok) {
+                userData = data.user || userData;
+                localStorage.setItem("user", JSON.stringify(userData));
+                populateForm(); updateProgress();
+                showToast("Profile updated successfully");
+                disableEdit(card); selectedPhotoFile = null;
+            } else showToast(data.message || "Update failed", "error");
+        } catch (err) { console.error("PROFILE ERROR:", err); showToast("Error updating profile", "error"); }
+        finally { document.getElementById("loader").style.display = "none"; }
+    }
+
+    // ================= PINCODE AUTO =================
+    async function autoSuggestCityState() {
+        const pincode = document.getElementById('address_pincode').value.trim();
+        if (!/^\d{6}$/.test(pincode)) return;
+        clearTimeout(pincodeTimer);
+        pincodeTimer = setTimeout(async () => {
+            try {
+                const res  = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+                const data = await res.json();
+                if (data[0].Status === 'Success') {
+                    const post = data[0].PostOffice[0];
+                    document.getElementById('address_city').value     = post.Division || '';
+                    document.getElementById('address_district').value = post.District || '';
+                    document.getElementById('address_state').value    = post.State || '';
+                    document.getElementById('address_country').value  = 'India';
+                    showToast('Location auto-filled');
+                }
+            } catch (err) { console.log("Pincode error:", err); }
+        }, 400);
+    }
+
+    // ================= PHOTO =================
+    document.getElementById("photoUpload")?.addEventListener("change", function(e) {
+        const file = e.target.files[0]; if (!file) return;
+        selectedPhotoFile = file;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const preview = document.getElementById("profileImgPreview");
+            preview.src = event.target.result; preview.style.display = "block";
+            const icon = preview.previousElementSibling;
+            if (icon) icon.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ================= BUSINESS GALLERY =================
+    function renderGallery() {
+        const container = document.getElementById("businessGallery");
+        if (!container) return;
+        container.innerHTML = "";
+        businessPhotos.forEach((src, index) => {
+            const isPrimary = index === primaryPhotoIndex;
+            const slot = document.createElement("div");
+            slot.className = `photo-slot has-image ${isPrimary ? 'primary' : ''}`;
+            slot.innerHTML = `<img src="${src}" alt="Business Photo ${index + 1}">
+                <div class="primary-badge">BANNER</div>
+                <div class="slot-controls">
+                    <button class="slot-btn primary-btn" onclick="setPrimary(${index})" title="Set as Banner"><i class="fas ${isPrimary ? 'fa-star' : 'fa-star-half-stroke'}"></i></button>
+                    <button class="slot-btn delete-btn" onclick="deletePhoto(${index})" title="Delete Photo"><i class="fas fa-trash"></i></button>
+                </div>`;
+            container.appendChild(slot);
+        });
+        const emptySlotsCount = 5 - businessPhotos.length;
+        for (let i = 0; i < emptySlotsCount; i++) {
+            const slot = document.createElement("div");
+            slot.className = "photo-slot";
+            slot.innerHTML = `<i class="fas fa-plus placeholder-icon"></i>
+                <label class="add-photo-label" onclick="document.getElementById('multiPhotoInput').click()"></label>`;
+            container.appendChild(slot);
+        }
+    }
+
+    function setPrimary(index) { primaryPhotoIndex = index; renderGallery(); }
+    function deletePhoto(index) {
+        businessPhotos.splice(index, 1);
+        if (primaryPhotoIndex >= businessPhotos.length) primaryPhotoIndex = Math.max(0, businessPhotos.length - 1);
+        renderGallery();
+    }
+
+    document.getElementById("multiPhotoInput")?.addEventListener("change", function(e) {
+        const file = e.target.files[0];
+        if (!file || businessPhotos.length >= 5) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function() {
+                const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
+                const MAX_WIDTH = 800, scale = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH; canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                businessPhotos.push(canvas.toDataURL("image/jpeg", 0.7));
+                renderGallery();
+            };
+        };
+        reader.readAsDataURL(file);
+        e.target.value = "";
+    });
+
+    // ================= PROGRESS =================
+    function updateProgress() {
+        const isValid = (val) => val && typeof val === 'string' && val.trim() !== "";
+        const isFilled = (val) => val !== undefined && val !== null && val !== "" && (Array.isArray(val) ? val.length > 0 : true);
+        const sections = [
+            isValid(userData.name) && isValid(userData.mobileNumber) && isValid(userData.dob),
+            isValid(userData.businessName) && isValid(userData.gstNumber) && isValid(userData.businessType),
+            isValid(userData.houseNo) && isValid(userData.pincode) && isValid(userData.city)
+        ];
+        const completedSections = sections.filter(Boolean).length;
+        const percent = (completedSections / 3) * 100;
+        document.getElementById("progressBar").style.width  = percent + "%";
+        document.getElementById("progressText").innerText   = `${completedSections}/3 Sections Complete`;
+        let isStrictlyComplete = false;
+        if (userData.role === 'wholesaler') {
+            const requiredFields = ['name','dob','mobileNumber','gender','businessName','businessType','industry','gstNumber','yearOfEstablishment','businessDescription','houseNo','street','pincode','city','state'];
+            isStrictlyComplete = requiredFields.every(field => isFilled(userData[field])) && isFilled(userData.businessPhotos) && userData.emailVerified === true;
+        }
+        const badge = document.getElementById("profileVerifiedBadge");
+        if (badge) badge.style.display = (isStrictlyComplete && userData.role === 'wholesaler') ? "inline-block" : "none";
+        toggleBadge('badge_mobileNumber', userData.mobileNumber);
+        toggleBadge('badge_businessName', userData.businessName);
+        toggleBadge('badge_gstNumber',    userData.gstNumber);
+        toggleBadge('badge_houseNo',      userData.houseNo);
+        toggleBadge('badge_pincode',      userData.pincode);
+    }
+
+    function toggleBadge(id, value) {
+        const badge = document.getElementById(id);
+        if (badge) { if (!value || value.trim() === '') badge.classList.add('active'); else badge.classList.remove('active'); }
+    }
+
+    // ================= OTP LOGIC =================
+    let otpTimerInterval = null;
+    function verifyAction(type) { if (type === 'Email') sendOTP(); else showToast(type + " verification feature coming soon", "info"); }
+
+    async function sendOTP(isResend = false) {
+        const btn       = document.getElementById('sendOtpBtn');
+        const resendBtn = document.getElementById('resendBtn');
+        try {
+            if (!isResend && btn)   { btn.disabled = true; btn.innerText = "Sending..."; }
+            if (isResend && resendBtn) { resendBtn.disabled = true; resendBtn.innerText = "Sending..."; }
+            const res  = await fetch("/api/auth/send-otp", { method:"POST", headers:{"Authorization":"Bearer "+authToken} });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, "success");
+                document.getElementById('otpSection').classList.add('show');
+                if (btn) btn.style.display = 'none';
+                startOtpTimer();
+            } else showToast(data.message, "error");
+        } catch (err) { console.error(err); showToast("Failed to send OTP", "error"); }
+        finally {
+            if (!isResend && btn)      { btn.disabled = false; btn.innerText = "Send OTP"; }
+            if (isResend && resendBtn) { resendBtn.innerText = "Resend OTP"; }
+        }
+    }
+
+    function startOtpTimer() {
+        const timerSpan = document.getElementById('otpTimer');
+        const resendBtn = document.getElementById('resendBtn');
+        let timeLeft    = 60;
+        if (resendBtn) resendBtn.disabled = true;
+        if (otpTimerInterval) clearInterval(otpTimerInterval);
+        otpTimerInterval = setInterval(() => {
+            timeLeft--;
+            if (timerSpan) timerSpan.innerText = `Wait ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(otpTimerInterval);
+                if (timerSpan) timerSpan.innerText = '';
+                if (resendBtn) resendBtn.disabled = false;
+            }
+        }, 1000);
+    }
+
+    async function verifyOTP() {
+        const otpInput = document.getElementById('otpInput');
+        const otp = otpInput ? otpInput.value.trim() : '';
+        if (!otp || otp.length !== 6) { showToast("Please enter a valid 6-digit OTP", "warning"); return; }
+        try {
+            const res  = await fetch("/api/auth/verify-otp", { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+authToken}, body:JSON.stringify({otp}) });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, "success");
+                userData.emailVerified = true;
+                localStorage.setItem("user", JSON.stringify(userData));
+                document.getElementById('otpSection').classList.remove('show');
+                populateForm(); updateProgress();
+            } else showToast(data.message, "error");
+        } catch (err) { console.error(err); showToast("Verification failed", "error"); }
+    }
+
+    function disableEdit(card) {
+        card.classList.remove("editing");
+        card.querySelectorAll(".form-control").forEach(input => { input.disabled = true; });
+        card.querySelector(".edit-btn").style.display = "inline-flex";
+        card.querySelector(".save-btn").style.display = "none";
+    }
+
+    // ================= TOAST =================
+    function showToast(msg, type = "success") {
+        const toast    = document.getElementById("toast");
+        const toastMsg = document.getElementById("toastMsg");
+        const icon     = toast.querySelector("i");
+        toastMsg.textContent = msg;
+        if (type === "success") { toast.className = "notification show success"; icon.className = "fas fa-check-circle"; }
+        else { toast.className = "notification show error"; icon.className = "fas fa-exclamation-circle"; }
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    // ================= UTILS =================
+    function dataURLtoBlob(dataurl) {
+        var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--) u8arr[n] = bstr.charCodeAt(n);
+        return new Blob([u8arr], {type:mime});
+    }
+  </script>
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <script src="/chatbot.js"></script>
+</body>
+</html>

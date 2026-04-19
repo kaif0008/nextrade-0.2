@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NexTrade | My Requirements</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:'#4361ee','primary-dark':'#3f37c9','primary-light':'#4895ef',
+            danger:'#ef233c',success:'#2bc155',
+          },
+          fontFamily: { sans: ['Poppins','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Nav-link classes referenced by JS-generated innerHTML */
+    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; color:#8d99ae; text-decoration:none; font-weight:500; transition:all .3s; border:none; background:none; width:100%; text-align:left; cursor:pointer; font-size:14px; }
+    .nav-link:hover { background:rgba(67,97,238,.05); color:#4361ee; }
+    .nav-link.active { background:#4361ee; color:white; }
+    .nav-link i { width:20px; text-align:center; }
+    .logout-btn { color:#ef233c; margin-top:8px; }
+    .logout-btn:hover { background:rgba(239,35,60,.05); color:#ef233c; }
+    /* Card classes used by JS-generated requirements HTML */
+    .req-card { background:white; border-radius:16px; padding:20px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,.05); border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:15px; transition:.3s; }
+    .req-card:hover { transform:translateY(-2px); box-shadow:0 5px 15px rgba(0,0,0,.08); border-color:#4895ef; }
+    .req-info { flex:1; }
+    .req-info h3 { font-size:16px; color:#1e293b; margin-bottom:4px; }
+    .req-meta { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; color:#64748b; margin-top:6px; }
+    .req-meta i { color:#4895ef; }
+    .status-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; }
+    .status-open { background:#dcfce7; color:#166534; }
+    .status-closed { background:#fee2e2; color:#991b1b; }
+    .req-actions { display:flex; gap:8px; flex-shrink:0; }
+    .btn-action { padding:7px 12px; border-radius:8px; border:none; cursor:pointer; font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px; transition:.2s; font-family:'Poppins',sans-serif; }
+    .btn-edit { background:#eff6ff; color:#4361ee; }
+    .btn-edit:hover { background:#dbeafe; }
+    .btn-delete { background:#fff1f2; color:#ef233c; }
+    .btn-delete:hover { background:#ffe4e6; }
+    /* Modal */
+    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:2000; padding:20px; }
+    .modal-content { background:white; width:100%; max-width:480px; border-radius:20px; padding:30px; box-shadow:0 5px 15px rgba(0,0,0,.1); position:relative; }
+    .form-input { width:100%; padding:11px 14px; border-radius:10px; border:1.5px solid #e2e8f0; outline:none; transition:.2s; font-size:14px; font-family:'Poppins',sans-serif; }
+    .form-input:focus { border-color:#4361ee; box-shadow:0 0 0 3px rgba(67,97,238,.08); }
+    @media(max-width:640px) { .req-card { flex-direction:column; align-items:flex-start; } .req-actions { width:100%; } }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen font-sans overflow-x-hidden">
+
+  <!-- Sidebar Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-[90] hidden"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"
+         class="fixed left-0 top-0 w-64 h-screen bg-white shadow-md z-[100] -translate-x-full lg:translate-x-0 flex flex-col p-6 transition-transform duration-300">
+    <div class="flex items-center justify-between mb-10">
+      <a href="retailer-dashboard.html" class="flex items-center gap-2 text-primary font-bold text-xl no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <button id="hideSidebar" class="text-gray-400 hover:text-gray-700 lg:hidden"><i class="fas fa-times"></i></button>
+    </div>
+    <nav id="sidebarNav" class="flex flex-col gap-1 flex-1"></nav>
+    <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="ml-0 lg:ml-64 flex-1 p-5 sm:p-7 transition-all duration-300">
+
+    <!-- Mobile topbar -->
+    <div class="flex items-center gap-3 mb-6 lg:hidden">
+      <button id="showSidebar" class="text-gray-600 hover:text-primary text-xl"><i class="fas fa-bars"></i></button>
+      <a href="index.html" class="flex items-center gap-2 no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-8 h-8 object-contain">
+        <span class="font-bold text-lg text-gray-900">NexTrade</span>
+      </a>
+    </div>
+
+    <!-- Page Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">My Requirements</h1>
+        <p class="text-sm text-gray-400 mt-1">Manage your active demand posts and marketplace requirements</p>
+      </div>
+      <button onclick="location.href='index.html?post=true'"
+              class="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition border-none cursor-pointer">
+        <i class="fas fa-plus"></i> Post New
+      </button>
+    </header>
+
+    <!-- Requirements List -->
+    <div id="reqList">
+      <div class="flex justify-center py-16"><i class="fas fa-circle-notch fa-spin text-3xl text-gray-300"></i></div>
+    </div>
+  </main>
+
+  <!-- ════ EDIT MODAL ════ -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900">Edit Requirement</h2>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl border-none bg-none cursor-pointer"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="editForm" class="flex flex-col gap-4">
+        <input type="hidden" id="editId">
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Product Name</label>
+          <input type="text" id="editName" class="form-input" required placeholder="e.g. Amul Milk 1L">
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</label>
+          <select id="editCategory" class="form-input" required></select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantity</label>
+            <input type="number" id="editQty" class="form-input" required min="1">
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Expected Price (₹)</label>
+            <input type="number" id="editPrice" class="form-input" step="0.01">
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</label>
+          <textarea id="editDesc" class="form-input" rows="3" placeholder="Specify any details like brand, packaging, or urgent needs..."></textarea>
+        </div>
+
+        <div class="flex gap-3 mt-2">
+          <button type="button" onclick="closeModal()"
+                  class="flex-1 py-3 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 font-semibold text-sm transition">Cancel</button>
+          <button type="submit"
+                  class="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold text-sm transition">Update Requirement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /* ALL JAVASCRIPT IDENTICAL TO ORIGINAL */
+    const user  = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+    if (!user || user.role !== 'retailer') location.href = 'login.html';
+
+    document.addEventListener("DOMContentLoaded", () => {
+      setupSidebar();
+      loadMyRequirements();
+      populateCategories();
+      setupToggles();
+      document.getElementById('editForm').addEventListener('submit', handleUpdate);
+    });
+
+    function setupToggles() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const show = document.getElementById('showSidebar');
+      const hide = document.getElementById('hideSidebar');
+
+      function open()  { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+      function close() { sidebar.classList.add('-translate-x-full');    overlay.classList.add('hidden'); }
+
+      if (show)    show.addEventListener('click', open);
+      if (hide)    hide.addEventListener('click', close);
+      if (overlay) overlay.addEventListener('click', close);
+    }
+
+    function setupSidebar() {
+      const nav = document.getElementById('sidebarNav');
+      const links = [
+        { name:'Dashboard',       icon:'home',       url:'retailer-dashboard.html' },
+        { name:'Explore Products', icon:'store',      url:'browse-products.html' },
+        { name:'Wholesalers',     icon:'building',    url:'wholesalers.html' },
+        { name:'My Requirements', icon:'list-check',  url:'my-requirements.html', active:true },
+        { name:'Deals Record',    icon:'handshake',   url:'deals-record.html' },
+        { name:'Messages',        icon:'comment-dots',url:'messages.html' },
+        { name:'Profile',         icon:'user',        url:'profile.html' }
+      ];
+      nav.innerHTML = links.map(l => `
+        <a href="${l.url}" class="nav-link ${l.active ? 'active' : ''}">
+          <i class="fas fa-${l.icon}"></i> ${l.name}
+        </a>`).join('');
+    }
+
+    function populateCategories() {
+      const select = document.getElementById('editCategory');
+      const categories = [
+        "Food","Grocery","Fruits & Vegetables","Dairy Products","Packaged Food & Beverages",
+        "Fashion & Apparel","Footwear","Electronics","Mobile & Accessories","Computers & IT",
+        "Home Appliances","Furniture","Home Decor","Kitchenware","Pharmacy & Medical",
+        "Ayurvedic & Herbal","Beauty & Cosmetics","Personal Care","Hardware & Tools",
+        "Electrical Supplies","Construction Materials","Automobile Parts & Accessories",
+        "Tyres & Batteries","Stationery & Office Supplies","Books & Education","Toys & Games",
+        "Gifts & Novelties","Agriculture & Farming Supplies","Seeds & Fertilizers","Pet Supplies",
+        "Sports & Fitness","Jewellery & Accessories","General Store / Multi-category"
+      ];
+      select.innerHTML = categories.sort().map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    async function loadMyRequirements() {
+      const list = document.getElementById('reqList');
+      try {
+        const res  = await fetch('/api/requirements/my', { headers:{ 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          if (data.requirements.length === 0) {
+            list.innerHTML = `
+              <div style="text-align:center; padding:80px 20px; color:#94a3b8;">
+                <i class="fas fa-clipboard-list fa-4x" style="opacity:.2; margin-bottom:20px; display:block;"></i>
+                <h3 style="margin-bottom:12px;">No requirements posted yet</h3>
+                <button class="btn-action btn-edit" style="margin:0 auto;" onclick="location.href='index.html?post=true'">Post Your First Requirement</button>
+              </div>`;
+            return;
+          }
+          list.innerHTML = data.requirements.map(req => `
+            <div class="req-card">
+              <div class="req-info">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                  <h3>${req.productName}</h3>
+                  <span class="status-badge status-${req.status}">${req.status}</span>
+                </div>
+                <div class="req-meta">
+                  <span><i class="fas fa-tag"></i> ${req.categories?.[0] || 'General'}</span>
+                  <span><i class="fas fa-cubes"></i> Qty: ${req.quantity}</span>
+                  <span><i class="fas fa-coins"></i> Expected: ₹${req.expectedPrice || 'N/A'}</span>
+                  <span><i class="fas fa-calendar"></i> ${new Date(req.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div class="req-actions">
+                ${req.status === 'open' ? `
+                  <button class="btn-action btn-edit" onclick="openEditModal('${req._id}')"><i class="fas fa-edit"></i> Edit</button>
+                  <button class="btn-action btn-delete" onclick="deleteReq('${req._id}')"><i class="fas fa-trash"></i> Delete</button>
+                ` : '<span style="color:#64748b; font-size:13px; font-weight:600; background:#f1f5f9; padding:6px 12px; border-radius:8px;"><i class="fas fa-lock"></i> Closed for deals</span>'}
+              </div>
+            </div>`).join('');
+        }
+      } catch (err) {
+        list.innerHTML = `<p style="color:#ef233c; text-align:center; padding:40px;">Failed to load requirements. Please try refreshing.</p>`;
+      }
+    }
+
+    async function openEditModal(id) {
+      try {
+        const res  = await fetch('/api/requirements/my', { headers:{ Authorization:`Bearer ${token}` } });
+        const data = await res.json();
+        const req  = data.requirements.find(r => r._id === id);
+        if (!req) return;
+        document.getElementById('editId').value    = req._id;
+        document.getElementById('editName').value  = req.productName;
+        document.getElementById('editCategory').value = req.categories?.[0] || "General Store / Multi-category";
+        document.getElementById('editQty').value   = req.quantity;
+        document.getElementById('editPrice').value = req.expectedPrice || '';
+        document.getElementById('editDesc').value  = req.description || '';
+        document.getElementById('editModal').style.display = 'flex';
+      } catch (e) { console.error(e); }
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    async function handleUpdate(e) {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const body = {
+        productName:   document.getElementById('editName').value,
+        categories:    [document.getElementById('editCategory').value],
+        quantity:      document.getElementById('editQty').value,
+        expectedPrice: document.getElementById('editPrice').value,
+        description:   document.getElementById('editDesc').value
+      };
+      try {
+        const res  = await fetch(`/api/requirements/${id}`, { method:'PATCH', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) { closeModal(); loadMyRequirements(); }
+        else alert(data.message || 'Update failed');
+      } catch (err) { console.error(err); }
+    }
+
+    async function deleteReq(id) {
+      if (!confirm('Are you sure you want to delete this requirement? This action cannot be undone.')) return;
+      try {
+        const res  = await fetch(`/api/requirements/${id}`, { method:'DELETE', headers:{ 'Authorization':`Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) loadMyRequirements();
+        else alert(data.message || 'Delete failed');
+      } catch (err) { console.error(err); }
+    }
+
+    function logout() { localStorage.clear(); location.href = 'login.html'; }
+  </script>
+</body>
+</html>

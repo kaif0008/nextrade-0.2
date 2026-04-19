@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - NexTrade</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:       '#4361ee',
+            'primary-dark':'#3f37c9',
+            'primary-light':'#4895ef',
+            accent:        '#f72585',
+            danger:        '#ef233c',
+            navy:          '#0f172a',
+          },
+          fontFamily: { sans: ['Poppins', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-50 font-sans relative px-4 py-8">
+
+  <!-- Home Button -->
+  <a href="index.html"
+     class="fixed top-4 left-4 z-50 flex items-center gap-2 bg-primary text-white text-sm font-medium px-4 py-2 rounded-lg shadow hover:-translate-y-0.5 hover:bg-primary-dark transition">
+    <i class="fas fa-home"></i> Home
+  </a>
+
+  <!-- Login Card -->
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 md:p-10">
+
+    <!-- Brand -->
+    <div class="text-center mb-8">
+      <a href="index.html" class="inline-flex items-center gap-2 text-primary font-bold text-2xl mb-4">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <h2 class="text-2xl font-bold text-gray-900 relative inline-block">
+        Welcome Back
+        <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-0.5 bg-primary rounded-full block"></span>
+      </h2>
+      <p class="text-gray-500 text-sm mt-4">Login to your NexTrade account</p>
+    </div>
+
+    <form id="loginForm" class="flex flex-col gap-5">
+
+      <!-- Email -->
+      <div class="relative group">
+        <i class="fas fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm group-focus-within:text-primary transition"></i>
+        <input
+          type="email" id="loginEmail" placeholder="Email Address" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+      </div>
+
+      <!-- Password -->
+      <div class="relative group">
+        <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm group-focus-within:text-primary transition"></i>
+        <input
+          type="password" id="loginPassword" placeholder="Password" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+      </div>
+
+      <!-- Forgot Password -->
+      <div class="flex justify-end -mt-2">
+        <a href="#" id="forgotPasswordLink"
+           class="text-sm text-primary font-medium hover:text-primary-dark transition">
+          Forgot Password?
+        </a>
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30">
+        Login
+      </button>
+
+      <p class="text-center text-sm text-gray-500">
+        Don't have an account?
+        <a href="signup.html" class="text-primary font-semibold hover:text-primary-dark">Sign Up</a>
+      </p>
+
+      <!-- Status Message -->
+      <p id="loginStatus"
+         class="text-center text-sm font-medium py-3 rounded-lg opacity-0 translate-y-2 transition-all duration-300">
+      </p>
+
+    </form>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       FORGOT PASSWORD MODAL
+       (All IDs and JS logic preserved exactly)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="resetModal"
+       class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden justify-center items-center z-50 p-5">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl relative modal-slide-up">
+
+      <!-- Close -->
+      <span id="closeResetModal"
+            class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl cursor-pointer leading-none">&times;</span>
+
+      <!-- Step 1: Request OTP -->
+      <div id="step1" class="reset-step active p-8 flex flex-col gap-5">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">Reset Password</h3>
+          <p class="text-gray-500 text-sm mt-1">Enter your email to receive a verification code.</p>
+        </div>
+        <div class="relative">
+          <i class="fas fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="email" id="resetEmail" placeholder="Email Address"
+                 class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+        </div>
+        <button id="requestOtpBtn"
+                class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-sm transition">
+          Send Verification Code
+        </button>
+      </div>
+
+      <!-- Step 2: Verify OTP -->
+      <div id="step2" class="reset-step p-8 flex flex-col gap-5" style="display:none;">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">Verify OTP</h3>
+          <p class="text-gray-500 text-sm mt-1">
+            We've sent a 6-digit code to <strong id="sentEmailDisplay"></strong>
+          </p>
+        </div>
+        <!-- OTP Input boxes -->
+        <div class="flex gap-2 justify-center">
+          <input type="text" maxlength="1" class="otp-field w-11 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          <input type="text" maxlength="1" class="otp-field w-11 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          <input type="text" maxlength="1" class="otp-field w-11 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          <input type="text" maxlength="1" class="otp-field w-11 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          <input type="text" maxlength="1" class="otp-field w-11 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          <input type="text" maxlength="1" class="otp-field w-11 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+        </div>
+        <button id="verifyOtpBtn"
+                class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-sm transition">
+          Verify Code
+        </button>
+        <p class="text-center text-sm text-gray-500">
+          Didn't get the code?
+          <a href="#" id="resendOtp" class="text-primary font-semibold hover:text-primary-dark">Resend</a>
+        </p>
+      </div>
+
+      <!-- Step 3: New Password -->
+      <div id="step3" class="reset-step p-8 flex flex-col gap-5" style="display:none;">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">New Password</h3>
+          <p class="text-gray-500 text-sm mt-1">Create a strong password for your account.</p>
+        </div>
+        <div class="relative">
+          <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="password" id="newPassword" placeholder="New Password"
+                 class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+        </div>
+        <div class="relative">
+          <i class="fas fa-check-circle absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="password" id="confirmPassword" placeholder="Confirm New Password"
+                 class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+        </div>
+        <button id="resetPasswordBtn"
+                class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-sm transition">
+          Reset Password
+        </button>
+      </div>
+
+      <!-- Modal Status Message -->
+      <p id="resetStatus"
+         class="mx-8 mb-6 text-center text-sm font-medium py-2.5 rounded-lg opacity-0 transition-all duration-300">
+      </p>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       All JavaScript logic below is IDENTICAL to the
+       original — zero functional changes made.
+       ═══════════════════════════════════════════════════ */
+
+    // ── LOGIN FORM ──
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const status = document.getElementById("loginStatus");
+      status.classList.remove('opacity-100', 'translate-y-0', 'bg-red-50', 'text-red-700', 'bg-green-50', 'text-green-700');
+      status.classList.add('opacity-0', 'translate-y-2');
+
+      const email    = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user",  JSON.stringify(data.user));
+
+        status.textContent = "Login successful! Redirecting...";
+        status.classList.add('opacity-100', 'translate-y-0', 'bg-green-50', 'text-green-700');
+
+        setTimeout(() => {
+          if (data.user.role === "admin") {
+            window.location.href = "admin-dashboard.html";
+          } else if (data.user.role === "wholesaler") {
+            window.location.href = "dashboard.html";
+          } else {
+            window.location.href = "index.html";
+          }
+        }, 1200);
+
+      } catch (error) {
+        status.textContent = error.message || "Incorrect email or password";
+        status.classList.add('opacity-100', 'translate-y-0', 'bg-red-50', 'text-red-700');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Login';
+      }
+    });
+
+    // ── INPUT SCALE ANIMATIONS ──
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('focus', () => { input.parentElement.style.transform = 'scale(1.02)'; });
+      input.addEventListener('blur',  () => { input.parentElement.style.transform = 'scale(1)'; });
+    });
+
+    // ── FORGOT PASSWORD MODAL ──
+    const resetModal        = document.getElementById('resetModal');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const closeResetModal   = document.getElementById('closeResetModal');
+    const resetStatus       = document.getElementById('resetStatus');
+
+    function showStep(stepNum) {
+      document.querySelectorAll('.reset-step').forEach(step => { step.style.display = 'none'; });
+      document.getElementById(`step${stepNum}`).style.display = 'flex';
+      resetStatus.classList.remove('opacity-100', 'bg-red-50', 'text-red-700', 'bg-green-50', 'text-green-700');
+      resetStatus.classList.add('opacity-0');
+    }
+
+    forgotPasswordLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      resetModal.style.display = 'flex';
+      showStep(1);
+    });
+
+    closeResetModal.addEventListener('click', () => { resetModal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === resetModal) resetModal.style.display = 'none'; });
+
+    // ── OTP INPUT HANDLING ──
+    const otpFields = document.querySelectorAll('.otp-field');
+    otpFields.forEach((field, index) => {
+      field.addEventListener('input', (e) => {
+        if (e.target.value.length === 1 && index < otpFields.length - 1) {
+          otpFields[index + 1].focus();
+        }
+      });
+      field.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          otpFields[index - 1].focus();
+        }
+      });
+    });
+
+    function getOtpValue() {
+      return Array.from(otpFields).map(f => f.value).join('');
+    }
+
+    // ── STEP 1 → STEP 2 ──
+    document.getElementById('requestOtpBtn').addEventListener('click', async () => {
+      const email = document.getElementById('resetEmail').value;
+      if (!email) return alert('Please enter your email');
+
+      const btn = document.getElementById('requestOtpBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+      try {
+        const res  = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('sentEmailDisplay').textContent = email;
+          showStep(2);
+        } else {
+          resetStatus.textContent = data.message;
+          resetStatus.classList.add('opacity-100', 'bg-red-50', 'text-red-700', 'py-2', 'rounded-lg');
+        }
+      } catch (err) {
+        resetStatus.textContent = 'Failed to send OTP';
+        resetStatus.classList.add('opacity-100', 'bg-red-50', 'text-red-700');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Send Verification Code';
+      }
+    });
+
+    // ── STEP 2 → STEP 3 ──
+    document.getElementById('verifyOtpBtn').addEventListener('click', () => {
+      const otp = getOtpValue();
+      if (otp.length < 6) return alert('Please enter the 6-digit code');
+      showStep(3);
+    });
+
+    // ── STEP 3: FINAL RESET ──
+    document.getElementById('resetPasswordBtn').addEventListener('click', async () => {
+      const email       = document.getElementById('resetEmail').value;
+      const otp         = getOtpValue();
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!newPassword || newPassword.length < 6) return alert('Password must be at least 6 characters');
+      if (newPassword !== confirmPassword)          return alert('Passwords do not match');
+
+      const btn = document.getElementById('resetPasswordBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+
+      try {
+        const res  = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp, newPassword })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          resetStatus.textContent = data.message;
+          resetStatus.classList.add('opacity-100', 'bg-green-50', 'text-green-700', 'py-2', 'rounded-lg');
+          setTimeout(() => {
+            resetModal.style.display = 'none';
+            document.getElementById('loginEmail').value = email;
+          }, 2000);
+        } else {
+          resetStatus.textContent = data.message;
+          resetStatus.classList.add('opacity-100', 'bg-red-50', 'text-red-700', 'py-2', 'rounded-lg');
+          if (data.message.includes('OTP')) showStep(2);
+        }
+      } catch (err) {
+        resetStatus.textContent = 'Reset failed';
+        resetStatus.classList.add('opacity-100', 'bg-red-50', 'text-red-700');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Reset Password';
+      }
+    });
+  </script>
+</body>
+</html>

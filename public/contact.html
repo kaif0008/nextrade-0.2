@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | NexTrade</title>
+  <meta name="description" content="Contact NexTrade support team. Get help with your account, technical issues, or wholesaler application.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:'#4361ee','primary-dark':'#3f37c9',
+            accent:'#f72585', navy:'#0f172a',
+          },
+          fontFamily: { sans: ['Poppins', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* FAQ accordion: toggled by existing JS */
+    .faq-answer { display:none; }
+    .active-faq .faq-answer { display:block; animation:fadeIn .3s ease forwards; }
+    .active-faq .faq-chevron { transform:rotate(180deg); }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<!-- ════ NAVBAR ════ -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-4">
+      <a href="index.html" class="flex items-center gap-2 no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain">
+        <span class="font-bold text-lg text-gray-900 hidden sm:block">Nex<span class="text-primary">Trade</span></span>
+      </a>
+      <nav class="hidden md:flex items-center gap-1">
+        <a href="index.html"           class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html"     class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+        <a href="contact.html"         class="px-3 py-2 text-sm font-medium text-primary bg-primary/5 rounded-lg">Contact Us</a>
+      </nav>
+      <div class="hidden md:flex items-center gap-2">
+        <a href="login.html"     id="loginBtn"     class="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 rounded-xl transition">Login</a>
+        <a href="signup.html"    id="signupBtn"    class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition">Sign Up</a>
+        <a href="dashboard.html" id="dashboardBtn" class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition" style="display:none;">Dashboard</a>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600 hover:text-primary"><i class="fas fa-bars text-xl"></i></button>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-100">
+      <nav class="flex flex-col gap-1 pt-3">
+        <a href="index.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2.5 text-sm text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Explore Products</a>
+        <a href="contact.html" class="px-3 py-2.5 text-sm text-primary bg-primary/5 rounded-lg">Contact Us</a>
+        <div class="flex gap-2 pt-2 border-t border-gray-100 mt-1">
+          <a href="login.html"  id="loginBtnMobile"  class="flex-1 text-center py-2.5 text-sm font-semibold text-primary border border-primary rounded-xl hover:bg-primary/5 transition">Login</a>
+          <a href="signup.html" id="signupBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition">Sign Up</a>
+          <a href="dashboard.html" id="dashboardBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition" style="display:none;">Dashboard</a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- ════ HERO ════ -->
+<section class="bg-navy text-white py-14 text-center px-4">
+  <h1 class="text-3xl sm:text-4xl font-bold mb-3">We'd Love to Hear From You</h1>
+  <p class="text-slate-400 max-w-xl mx-auto">Have questions about our platform or need assistance? Our team is ready to help you with any inquiries.</p>
+</section>
+
+<!-- ════ MAIN CONTENT ════ -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+  <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+
+    <!-- Contact Form -->
+    <div class="bg-white rounded-2xl shadow-sm p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Send Us a Message</h2>
+      <p class="text-gray-500 text-sm mb-7">Fill out the form below and we'll get back to you within 24 hours.</p>
+
+      <form id="contactForm" class="flex flex-col gap-5">
+        <div class="flex flex-col gap-1.5">
+          <label for="name" class="text-sm font-medium text-gray-700">Full Name</label>
+          <div class="relative">
+            <i class="fas fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="name" name="name" placeholder="Enter your name" required
+                   class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="email" class="text-sm font-medium text-gray-700">Email Address</label>
+          <div class="relative">
+            <i class="fas fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required
+                   class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="subject" class="text-sm font-medium text-gray-700">Subject</label>
+          <div class="relative">
+            <i class="fas fa-tag absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <select id="subject" name="subject" required
+                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition bg-white appearance-none">
+              <option value="" disabled selected>Select a subject</option>
+              <option value="general">General Inquiry</option>
+              <option value="account">Account Support</option>
+              <option value="wholesaler">Wholesaler Application</option>
+              <option value="technical">Technical Support</option>
+              <option value="feedback">Feedback/Suggestions</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="message" class="text-sm font-medium text-gray-700">Your Message</label>
+          <textarea id="message" name="message" rows="6" placeholder="Type your message here..." required
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition resize-none"></textarea>
+        </div>
+
+        <button type="submit"
+                class="flex items-center justify-center gap-2 w-full sm:w-auto sm:self-start bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-semibold text-sm transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30">
+          <i class="fas fa-paper-plane"></i> Send Message
+        </button>
+      </form>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="flex flex-col gap-6">
+      <div class="bg-white rounded-2xl shadow-sm p-7">
+        <h2 class="text-xl font-bold text-gray-900 mb-5">Other Ways to Reach Us</h2>
+
+        <div class="flex flex-col gap-5">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0 text-lg">
+              <i class="fas fa-phone-alt"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900 text-sm">Phone Support</h3>
+              <p class="text-sm text-gray-600">+91 7295988994</p>
+              <p class="text-xs text-gray-400">Mon-Fri: 9AM - 6PM IST</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0 text-lg">
+              <i class="fas fa-envelope-open-text"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900 text-sm">Email Us</h3>
+              <p class="text-sm text-gray-600">nextradeconnect@gmail.com</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0 text-lg">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900 text-sm">Visit Our Office</h3>
+              <p class="text-sm text-gray-600">CCSIT, TMU</p>
+              <p class="text-sm text-gray-600">Moradabad, IN 244102, India</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-7">
+        <h3 class="font-semibold text-gray-900 mb-4">Connect With Us</h3>
+        <div class="flex gap-3">
+          <a href="#" aria-label="Facebook"  class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-primary hover:text-white text-gray-500 flex items-center justify-center transition"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Twitter"   class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-primary hover:text-white text-gray-500 flex items-center justify-center transition"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="LinkedIn"  class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-primary hover:text-white text-gray-500 flex items-center justify-center transition"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" aria-label="Instagram" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-primary hover:text-white text-gray-500 flex items-center justify-center transition"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ════ FAQ ════ -->
+<section class="bg-white border-t border-gray-100 py-14 px-4">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-10">Frequently Asked Questions</h2>
+
+    <div class="flex flex-col gap-4">
+
+      <div class="faq-item rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <button class="faq-question w-full px-5 py-5 text-left bg-gray-50 hover:bg-gray-100 flex items-center justify-between font-semibold text-gray-800 text-sm sm:text-base transition">
+          How do I become a verified wholesaler on NexTrade?
+          <i class="fas fa-chevron-down faq-chevron text-gray-400 transition-transform duration-300 text-sm flex-shrink-0"></i>
+        </button>
+        <div class="faq-answer px-5 py-5 bg-white text-gray-600 text-sm leading-relaxed border-t border-gray-100">
+          <p>To become a verified wholesaler, please submit an application through our Wholesaler Registration page. Our team will review your business details and contact you within 3-5 business days to complete the verification process.</p>
+        </div>
+      </div>
+
+      <div class="faq-item rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <button class="faq-question w-full px-5 py-5 text-left bg-gray-50 hover:bg-gray-100 flex items-center justify-between font-semibold text-gray-800 text-sm sm:text-base transition">
+          What payment methods do you accept?
+          <i class="fas fa-chevron-down faq-chevron text-gray-400 transition-transform duration-300 text-sm flex-shrink-0"></i>
+        </button>
+        <div class="faq-answer px-5 py-5 bg-white text-gray-600 text-sm leading-relaxed border-t border-gray-100">
+          <p>NexTrade supports various payment methods including credit/debit cards, bank transfers, and digital wallets. All transactions are processed securely through our payment gateway partners.</p>
+        </div>
+      </div>
+
+      <div class="faq-item rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <button class="faq-question w-full px-5 py-5 text-left bg-gray-50 hover:bg-gray-100 flex items-center justify-between font-semibold text-gray-800 text-sm sm:text-base transition">
+          How can I reset my account password?
+          <i class="fas fa-chevron-down faq-chevron text-gray-400 transition-transform duration-300 text-sm flex-shrink-0"></i>
+        </button>
+        <div class="faq-answer px-5 py-5 bg-white text-gray-600 text-sm leading-relaxed border-t border-gray-100">
+          <p>You can reset your password by clicking on the "Forgot Password" link on the login page. We'll send a password reset link to your registered email address.</p>
+        </div>
+      </div>
+
+      <div class="faq-item rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <button class="faq-question w-full px-5 py-5 text-left bg-gray-50 hover:bg-gray-100 flex items-center justify-between font-semibold text-gray-800 text-sm sm:text-base transition">
+          Is there a mobile app available?
+          <i class="fas fa-chevron-down faq-chevron text-gray-400 transition-transform duration-300 text-sm flex-shrink-0"></i>
+        </button>
+        <div class="faq-answer px-5 py-5 bg-white text-gray-600 text-sm leading-relaxed border-t border-gray-100">
+          <p>Yes! NexTrade is available on both iOS and Android platforms. You can download it from the App Store or Google Play Store.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════ FOOTER ════ -->
+<footer class="bg-navy text-white pt-14 pb-6 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+      <div>
+        <a href="index.html" class="flex items-center gap-2 mb-3 no-underline">
+          <img src="/img/logo.png" alt="NexTrade Logo" class="w-8 h-8 object-contain">
+          <span class="font-bold text-lg">Nex<span class="text-primary-light">Trade</span></span>
+        </a>
+        <p class="text-slate-400 text-sm">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+      </div>
+      <div>
+        <h3 class="text-sky-400 font-semibold text-sm mb-4">Company</h3>
+        <ul class="flex flex-col gap-2.5">
+          <li><a href="about.html"   class="text-slate-300 hover:text-sky-400 text-sm transition">About Us</a></li>
+          <li><a href="careers.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Careers</a></li>
+          <li><a href="blog.html"    class="text-slate-300 hover:text-sky-400 text-sm transition">Blog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sky-400 font-semibold text-sm mb-4">Resources</h3>
+        <ul class="flex flex-col gap-2.5">
+          <li><a href="help-center.html"     class="text-slate-300 hover:text-sky-400 text-sm transition">Help Center</a></li>
+          <li><a href="wholesaler-guide.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Wholesaler Guide</a></li>
+          <li><a href="shopkeeper-guide.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Shopkeeper Guide</a></li>
+          <li><a href="faq.html"              class="text-slate-300 hover:text-sky-400 text-sm transition">FAQs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sky-400 font-semibold text-sm mb-4">Legal</h3>
+        <ul class="flex flex-col gap-2.5">
+          <li><a href="privacy.html"       class="text-slate-300 hover:text-sky-400 text-sm transition">Privacy Policy</a></li>
+          <li><a href="terms.html"         class="text-slate-300 hover:text-sky-400 text-sm transition">Terms of Service</a></li>
+          <li><a href="security.html"      class="text-slate-300 hover:text-sky-400 text-sm transition">Security</a></li>
+          <li><a href="cookie-policy.html" class="text-slate-300 hover:text-sky-400 text-sm transition">Cookie Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-slate-700 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+      <p class="text-slate-400">© 2023 NexTrade. All rights reserved.</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-slate-400 hover:text-sky-400 transition"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="text-slate-400 hover:text-sky-400 transition"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="text-slate-400 hover:text-sky-400 transition"><i class="fab fa-linkedin-in"></i></a>
+        <a href="#" class="text-slate-400 hover:text-sky-400 transition"><i class="fab fa-instagram"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/contact.js"></script>
+<script>
+  /* FAQ ACCORDION — original logic preserved */
+  document.addEventListener('DOMContentLoaded', function () {
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+      const question = item.querySelector('.faq-question');
+      question.addEventListener('click', () => { item.classList.toggle('active-faq'); });
+    });
+  });
+
+  /* AUTH HEADER TOGGLE — handled by main.js */
+
+  document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('hidden');
+  });
+</script>
+
+<script src="/chatbot.js"></script>
+</body>
+</html>

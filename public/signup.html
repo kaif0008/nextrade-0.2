@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - NexTrade</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:       '#4361ee',
+            'primary-dark':'#3f37c9',
+            'primary-light':'#4895ef',
+            accent:        '#f72585',
+            danger:        '#ef233c',
+            success:       '#2bc155',
+            navy:          '#0f172a',
+          },
+          fontFamily: { sans: ['Poppins', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8 font-sans">
+
+  <!-- Status Toast -->
+  <div id="statusMessage"
+       class="hidden fixed top-5 right-5 z-50 px-5 py-3 rounded-lg text-sm font-medium shadow-lg max-w-xs">
+  </div>
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 md:p-10">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <a href="index.html" class="inline-flex items-center gap-2 text-primary font-bold text-2xl mb-4">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain"> NexTrade
+      </a>
+      <h1 class="text-2xl font-bold text-gray-900">Create Account</h1>
+      <p class="text-gray-500 text-sm mt-1">Join NexTrade – India's B2B Marketplace</p>
+    </div>
+
+    <form id="signupForm" class="flex flex-col gap-4">
+
+      <!-- Full Name -->
+      <div class="relative">
+        <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text" id="name" placeholder="Full Name" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+      </div>
+
+      <!-- Email -->
+      <div class="relative">
+        <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="email" id="email" placeholder="Email Address" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+      </div>
+
+      <!-- Password -->
+      <div class="relative">
+        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="password" id="password" placeholder="Password (min. 6 chars)" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+      </div>
+
+      <!-- Role -->
+      <div class="relative">
+        <i class="fas fa-user-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <select
+          id="role" required
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition appearance-none bg-white">
+          <option value="">Select Role</option>
+          <option value="wholesaler">Wholesaler</option>
+          <option value="retailer">Retailer</option>
+        </select>
+        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+      </div>
+
+      <!-- GST Field (shown/hidden by JS) -->
+      <div id="gst-field" class="relative" style="display:none;">
+        <i class="fas fa-id-card absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text" id="gstNumber" placeholder="GST Number (e.g. 22AAAAA0000A1Z5)"
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition uppercase">
+      </div>
+
+      <!-- GST hint -->
+      <p id="gstHint" class="hidden text-xs text-gray-500 -mt-2 pl-1">
+        <i class="fas fa-info-circle text-primary mr-1"></i>
+        Wholesalers must provide a valid GST number. Retailers may optionally add it.
+      </p>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 mt-2">
+        Create Account
+      </button>
+
+      <p class="text-center text-sm text-gray-500">
+        Already have an account?
+        <a href="login.html" class="text-primary font-semibold hover:text-primary-dark">Login</a>
+      </p>
+
+    </form>
+  </div>
+
+  <script>
+    // ── SHOW GST FIELD (original logic preserved exactly) ──
+    document.getElementById("role").addEventListener("change", function() {
+      const gstField = document.getElementById("gst-field");
+      const gstHint  = document.getElementById("gstHint");
+
+      if (this.value === "wholesaler" || this.value === "retailer") {
+        gstField.style.display = "block";
+        gstHint.classList.remove("hidden");
+      } else {
+        gstField.style.display = "none";
+        gstHint.classList.add("hidden");
+      }
+    });
+
+    // ── FORM SUBMIT (original logic preserved exactly) ──
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name      = document.getElementById("name").value;
+      const email     = document.getElementById("email").value;
+      const password  = document.getElementById("password").value;
+      const role      = document.getElementById("role").value;
+      const gstNumber = document.getElementById("gstNumber").value;
+
+      if (!name || !email || !password || !role) {
+        return showMsg("Fill all fields", false);
+      }
+
+      if (role === "wholesaler" && !gstNumber) {
+        return showMsg("GST required for wholesaler", false);
+      }
+
+      try {
+        const res = await fetch("/api/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, role, gstNumber })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showMsg("Signup successful! Redirecting...", true);
+          setTimeout(() => window.location.href = "login.html", 1500);
+        } else {
+          showMsg(data.message, false);
+        }
+
+      } catch {
+        showMsg("Error occurred. Please try again.", false);
+      }
+    });
+
+    // ── TOAST MESSAGE (original logic preserved exactly) ──
+    function showMsg(msg, success) {
+      const box = document.getElementById("statusMessage");
+      box.style.display = "block";
+      box.style.background = success ? "#d1fae5" : "#fee2e2";
+      box.style.color      = success ? "#065f46" : "#991b1b";
+      box.style.border     = success ? "1px solid #a7f3d0" : "1px solid #fecaca";
+      box.innerText = msg;
+      setTimeout(() => box.style.display = "none", 3000);
+    }
+  </script>
+</body>
+</html>

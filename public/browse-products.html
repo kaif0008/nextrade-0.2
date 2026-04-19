@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexTrade | Explore Products</title>
+  <meta name="description" content="Browse all wholesale products on NexTrade. Filter by category, sort by price, and connect directly with verified suppliers.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:        '#4361ee',
+            'primary-dark': '#3f37c9',
+            'primary-light':'#4895ef',
+            danger:         '#ef233c',
+            success:        '#10b981',
+            navy:           '#0f172a',
+          },
+          fontFamily: { sans: ['Poppins', 'sans-serif'], syne: ['Syne', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Product card classes (JS generates these) */
+    .p-card { background:white; border:1px solid #f1f5f9; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; transition:all .3s; position:relative; }
+    .p-card:hover { transform:translateY(-4px); box-shadow:0 12px 30px rgba(67,97,238,.14); border-color:#cbd5e1; }
+    .p-img-area { position:relative; height:200px; background:linear-gradient(135deg,#e0e7ff,#f0f4ff); overflow:hidden; }
+    .p-img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+    .p-card:hover .p-img { transform:scale(1.06); }
+    .p-img-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:52px; font-weight:800; color:rgba(67,97,238,.22); }
+    .cat-badge { position:absolute; top:11px; left:11px; background:rgba(15,23,42,.65); backdrop-filter:blur(6px); color:white; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; z-index:2; }
+    .stock-badge { position:absolute; top:11px; right:11px; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:700; z-index:2; }
+    .stock-badge.in  { background:rgba(16,185,129,.15); color:#059669; border:1px solid rgba(16,185,129,.3); }
+    .stock-badge.low { background:rgba(245,158,11,.15); color:#d97706; border:1px solid rgba(245,158,11,.3); }
+    .stock-badge.out { background:rgba(239,35,60,.12);  color:#dc2626; border:1px solid rgba(239,35,60,.25); }
+    .oos-overlay { position:absolute; inset:0; background:rgba(255,255,255,.55); z-index:3; display:flex; align-items:center; justify-content:center; }
+    .oos-tag { background:#ef233c; color:white; padding:6px 14px; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; border-radius:4px; transform:rotate(-5deg); box-shadow:0 3px 8px rgba(239,35,60,.3); }
+    .p-body { padding:16px; flex:1; display:flex; flex-direction:column; }
+    .p-name { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:#0f172a; margin-bottom:8px; line-height:1.3; }
+    .p-price-row { display:flex; align-items:baseline; gap:5px; margin-bottom:9px; }
+    .p-price { font-size:20px; font-weight:700; color:#4361ee; }
+    .p-unit { font-size:12px; color:#94a3b8; font-weight:500; }
+    .p-meta { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#64748b; margin-bottom:12px; }
+    .p-meta div { display:flex; align-items:center; gap:7px; }
+    .p-meta i { width:13px; color:#94a3b8; font-size:11px; }
+    .ws-row { display:flex; align-items:center; gap:8px; padding:9px 11px; background:rgba(67,97,238,.04); border-radius:8px; margin-top:auto; }
+    .ws-av { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:white; flex-shrink:0; }
+    .ws-name { font-size:12px; font-weight:600; color:#1e293b; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ws-verified { color:#10b981; font-size:12px; flex-shrink:0; }
+    .p-actions { display:flex; gap:10px; border-top:1px solid #f1f5f9; padding:12px 16px; }
+    .btn-inquire { flex:1; background:#0f172a; color:white; border:none; padding:10px 12px; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; transition:.2s; display:flex; align-items:center; justify-content:center; gap:6px; text-decoration:none; }
+    .btn-inquire:hover { background:#4361ee; }
+    .btn-inquire.disabled { background:#cbd5e1; color:#94a3b8; cursor:not-allowed; }
+    .btn-ws { background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 12px; border-radius:7px; font-size:13px; cursor:pointer; font-family:'Poppins',sans-serif; transition:.2s; display:flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; text-decoration:none; }
+    .btn-ws:hover { border-color:#4361ee; color:#4361ee; background:#f0f4ff; }
+    .empty-state { grid-column:1/-1; text-align:center; padding:70px 20px; color:#64748b; }
+    .empty-state i { font-size:48px; color:#cbd5e1; margin-bottom:15px; display:block; }
+    .empty-state h3 { color:#1e293b; font-size:18px; margin-bottom:8px; }
+    .btn-clear { background:#1e293b; color:white; border:none; padding:10px 22px; border-radius:8px; cursor:pointer; font-size:13px; font-family:'Poppins',sans-serif; transition:.2s; margin-top:12px; }
+    .btn-clear:hover { background:#4361ee; }
+    /* Filter chips & pills */
+    .chip { padding:6px 14px; border:1.5px solid #e2e8f0; border-radius:20px; font-size:12px; font-weight:500; color:#64748b; background:#f8fafc; cursor:pointer; transition:.2s; white-space:nowrap; }
+    .chip:hover { border-color:#4361ee; color:#4361ee; }
+    .chip.active { background:#4361ee; color:white; border-color:#4361ee; box-shadow:0 3px 10px rgba(67,97,238,.22); }
+    .stock-pill { padding:7px 13px; border:1.5px solid #e2e8f0; border-radius:20px; font-size:12px; font-weight:500; color:#64748b; background:#f8fafc; cursor:pointer; transition:.2s; white-space:nowrap; }
+    .stock-pill:hover { border-color:#10b981; color:#10b981; }
+    .stock-pill.active { background:#10b981; color:white; border-color:#10b981; box-shadow:0 3px 10px rgba(16,185,129,.22); }
+    .stock-pill.low:hover { border-color:#f59e0b; color:#f59e0b; }
+    .stock-pill.low.active { background:#f59e0b; border-color:#f59e0b; box-shadow:0 3px 10px rgba(245,158,11,.22); }
+    /* Toast */
+    .toast { position:fixed; bottom:28px; right:28px; background:#0f172a; color:white; padding:13px 20px; border-radius:12px; font-size:13px; font-weight:500; z-index:3000; display:flex; align-items:center; gap:9px; box-shadow:0 8px 24px rgba(0,0,0,.18); transform:translateY(80px); opacity:0; transition:all .32s cubic-bezier(.4,0,.2,1); }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.ok  { background:#065f46; }
+    .toast.err { background:#7f1d1d; }
+  </style>
+</head>
+
+<body class="bg-gray-50 font-sans overflow-x-hidden">
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fas fa-check-circle"></i>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<!-- ════ NAVBAR ════ -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between py-4">
+      <a href="index.html" class="flex items-center gap-2 no-underline">
+        <img src="/img/logo.png" alt="NexTrade Logo" class="w-10 h-10 object-contain">
+        <span class="font-bold text-lg text-gray-900 hidden sm:block">Nex<span class="text-primary">Trade</span></span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-1">
+        <a href="index.html"            class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html"      class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html"  class="px-3 py-2 text-sm font-medium text-primary bg-primary/5 rounded-lg">Explore Products</a>
+        <a href="contact.html"          class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+      </nav>
+
+      <div class="hidden md:flex items-center gap-2">
+        <a href="login.html"     id="loginBtn"     class="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 rounded-xl transition">Login</a>
+        <a href="signup.html"    id="signupBtn"    class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition">Sign Up</a>
+        <a href="dashboard.html" id="dashboardBtn" class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-xl transition" style="display:none;">Dashboard</a>
+      </div>
+
+      <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600 hover:text-primary">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-100">
+      <nav class="flex flex-col gap-1 pt-3">
+        <a href="index.html"           class="px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Home</a>
+        <a href="wholesalers.html"     class="px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Wholesalers</a>
+        <a href="browse-products.html" class="px-3 py-2.5 text-sm font-medium text-primary bg-primary/5 rounded-lg">Explore Products</a>
+        <a href="contact.html"         class="px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition">Contact Us</a>
+        <div class="flex gap-2 pt-2 border-t border-gray-100 mt-1">
+          <a href="login.html"  id="loginBtnMobile"  class="flex-1 text-center py-2.5 text-sm font-semibold text-primary border border-primary rounded-xl hover:bg-primary/5 transition">Login</a>
+          <a href="signup.html" id="signupBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition">Sign Up</a>
+          <a href="dashboard.html" id="dashboardBtnMobile" class="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition" style="display:none;">Dashboard</a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- ════ HERO BAND ════ -->
+<div class="py-10 sm:py-14 text-center px-4 relative overflow-hidden"
+     style="background:linear-gradient(135deg,#0f172a 0%,#1a2560 60%,#0f172a 100%);">
+  <div class="absolute top-[-80px] right-[-80px] w-64 h-64 rounded-full pointer-events-none"
+       style="background:radial-gradient(circle,rgba(67,97,238,.25) 0%,transparent 70%);"></div>
+  <h1 class="font-syne text-3xl sm:text-4xl font-bold text-white mb-2 relative z-10">
+    Explore <span class="bg-gradient-to-r from-primary-light to-accent bg-clip-text text-transparent">All Products</span>
+  </h1>
+  <p class="text-slate-400 mb-5 relative z-10">Browse verified wholesale products and connect directly with suppliers</p>
+  <div class="flex gap-3 justify-center flex-wrap relative z-10">
+    <div class="flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-2 text-white text-sm font-semibold">
+      <i class="fas fa-box-open text-sky-400"></i>
+      <strong id="statTotal">—</strong> <span class="text-slate-400 font-normal ml-1">Products</span>
+    </div>
+    <div class="flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-2 text-white text-sm font-semibold">
+      <i class="fas fa-building text-sky-400"></i>
+      <strong id="statWholesalers">—</strong> <span class="text-slate-400 font-normal ml-1">Wholesalers</span>
+    </div>
+    <div class="flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-2 text-white text-sm font-semibold">
+      <i class="fas fa-tags text-sky-400"></i>
+      <strong id="statCategories">—</strong> <span class="text-slate-400 font-normal ml-1">Categories</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ FILTERS BAR ════ -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 -mt-5 mb-8 relative z-10">
+  <div class="bg-white rounded-2xl shadow-md p-4 sm:p-5">
+    <!-- Row 1 -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="relative flex-1 min-w-[200px]">
+        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="text" id="searchInput" placeholder="Search by product name or category..."
+               autocomplete="off"
+               class="w-full pl-10 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition bg-gray-50">
+        <button id="clearSearch" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-sm border-none bg-none" style="display:none;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap gap-2 items-center">
+        <select id="sortSelect"
+                class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary transition bg-gray-50 text-gray-700">
+          <option value="newest">Newest First</option>
+          <option value="price_asc">Price: Low → High</option>
+          <option value="price_desc">Price: High → Low</option>
+          <option value="name_asc">Name A–Z</option>
+        </select>
+
+        <div class="flex gap-2">
+          <button class="stock-pill active" data-val="all">All</button>
+          <button class="stock-pill" data-val="in_stock">In Stock</button>
+          <button class="stock-pill low" data-val="low_stock">Low Stock</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Category Chips -->
+    <div id="catChips" class="flex flex-wrap gap-2 items-center">
+      <button class="chip active" data-cat="">All Categories</button>
+      <button class="chip" data-cat="Grocery">Grocery</button>
+      <button class="chip" data-cat="Electronics">Electronics</button>
+      <button class="chip" data-cat="Textiles">Textiles</button>
+      <button class="chip" data-cat="Pharma">Pharma</button>
+      <button class="chip" data-cat="Hardware">Hardware</button>
+      <button class="chip" data-cat="FMCG">FMCG</button>
+      <button class="chip" data-cat="Clothing">Clothing</button>
+      <button class="chip" data-cat="Food">Food</button>
+    </div>
+
+    <div id="resultInfo" class="text-xs text-gray-400 font-medium mt-3">Loading products…</div>
+  </div>
+</div>
+
+<!-- ════ RECOMMENDED (retailer only, JS-revealed) ════ -->
+<div id="recSection" class="max-w-7xl mx-auto px-4 sm:px-6 mb-8" style="display:none;">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-syne text-xl font-bold text-navy">✨ Recommended for You</h2>
+    <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full font-medium">AI Powered</span>
+  </div>
+  <div id="recStrip" class="flex gap-3.5 overflow-x-auto pb-2 -mx-1 px-1"
+       style="scrollbar-width:thin; -webkit-overflow-scrolling:touch;">
+    <div style="min-width:180px;height:210px;border-radius:12px;" class="skeleton flex-shrink-0"></div>
+    <div style="min-width:180px;height:210px;border-radius:12px;" class="skeleton flex-shrink-0"></div>
+    <div style="min-width:180px;height:210px;border-radius:12px;" class="skeleton flex-shrink-0"></div>
+  </div>
+</div>
+
+<!-- ════ PRODUCTS GRID ════ -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 mb-14">
+  <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+</div>
+
+<!-- AI Chatbot -->
+<script src="/chatbot.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+  /* ALL JAVASCRIPT IDENTICAL TO ORIGINAL */
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user && user.role === 'wholesaler') { location.href = 'wholesaler-dashboard.html'; }
+
+  const state = { all: [], filtered: [], search: '', category: '', stock: 'all', sort: 'newest', wsMap: {} };
+  let activeInquiry = null;
+
+  function avatarColor(str) {
+    const c = ['#4361ee','#10b981','#7209b7','#f72585','#e36414','#0891b2','#d97706'];
+    let n = 0;
+    for (let i = 0; i < str.length; i++) n += str.charCodeAt(i);
+    return c[n % c.length];
+  }
+
+  function showToast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    t.className = `toast ${type}`;
+    document.getElementById('toastMsg').innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3400);
+  }
+
+  function showSkeletons(n = 9) {
+    const g = document.getElementById('productsGrid');
+    let h = '';
+    for (let i = 0; i < n; i++) {
+      h += `
+        <div class="p-card">
+          <div class="skeleton" style="height:200px;border-radius:0;"></div>
+          <div class="p-body">
+            <div class="skeleton" style="height:17px;width:70%;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:23px;width:40%;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:12px;width:55%;margin-bottom:6px;"></div>
+            <div class="skeleton" style="height:12px;width:45%;margin-bottom:14px;"></div>
+            <div class="skeleton" style="height:34px;border-radius:8px;"></div>
+          </div>
+          <div class="p-actions" style="border-top:1px solid #f1f5f9;">
+            <div class="skeleton" style="height:36px;flex:1;border-radius:7px;"></div>
+            <div class="skeleton" style="height:36px;width:110px;border-radius:7px;"></div>
+          </div>
+        </div>`;
+    }
+    g.innerHTML = h;
+  }
+
+  async function fetchProducts() {
+    showSkeletons();
+    try {
+      const [pRes, wRes] = await Promise.all([fetch('/api/products'), fetch('/api/wholesalers')]);
+      const [pData, wData] = await Promise.all([pRes.json(), wRes.json()]);
+      if (!pData.success) throw new Error();
+      if (wData.success) { wData.wholesalers.forEach(w => { state.wsMap[w._id] = w; }); }
+      state.all = pData.products || [];
+      const uWs  = new Set(state.all.map(p => p.wholesalerId?.toString()).filter(Boolean));
+      const uCats = new Set(state.all.map(p => p.category).filter(Boolean));
+      document.getElementById('statTotal').innerText       = state.all.length;
+      document.getElementById('statWholesalers').innerText = uWs.size;
+      document.getElementById('statCategories').innerText  = uCats.size;
+      const base = ['','Grocery','Electronics','Textiles','Pharma','Hardware','FMCG','Clothing','Food'];
+      uCats.forEach(cat => {
+        if (!base.includes(cat)) {
+          const el = document.createElement('button');
+          el.className = 'chip'; el.dataset.cat = cat; el.innerText = cat;
+          el.addEventListener('click', () => setCat(cat, el));
+          document.getElementById('catChips').appendChild(el);
+        }
+      });
+      applyFilters();
+    } catch (e) {
+      document.getElementById('productsGrid').innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:#ef233c;"></i><h3>Could not load products</h3><p>Please check your connection and try again.</p><button class="btn-clear" onclick="fetchProducts()">Retry</button></div>`;
+      document.getElementById('resultInfo').innerText = 'Error loading products.';
+    }
+  }
+
+  function applyFilters() {
+    const term = state.search.toLowerCase().trim();
+    state.filtered = state.all.filter(p => {
+      if (term) { const mn = p.name?.toLowerCase().includes(term); const mc = p.category?.toLowerCase().includes(term); if (!mn && !mc) return false; }
+      if (state.category && p.category !== state.category) return false;
+      if (state.stock === 'in_stock'  && p.stock <= 10)                   return false;
+      if (state.stock === 'low_stock' && !(p.stock > 0 && p.stock <= 10)) return false;
+      return true;
+    });
+    if      (state.sort === 'price_asc')  state.filtered.sort((a,b) => (a.pricePerUnit||0) - (b.pricePerUnit||0));
+    else if (state.sort === 'price_desc') state.filtered.sort((a,b) => (b.pricePerUnit||0) - (a.pricePerUnit||0));
+    else if (state.sort === 'name_asc')   state.filtered.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    else                                  state.filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    render();
+  }
+
+  function render() {
+    const grid = document.getElementById('productsGrid');
+    const info = document.getElementById('resultInfo');
+    info.innerText = `Showing ${state.filtered.length} product${state.filtered.length !== 1 ? 's' : ''}${state.search ? ` for "${state.search}"` : ''}`;
+    if (!state.filtered.length) {
+      grid.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h3>No products found</h3><p>Try adjusting your search or removing filters.</p><button class="btn-clear" onclick="resetFilters()">Clear All Filters</button></div>`;
+      return;
+    }
+    grid.innerHTML = '';
+    state.filtered.forEach(p => {
+      const ws      = state.wsMap[p.wholesalerId?.toString()] || {};
+      const wsName  = ws.businessName || ws.name || 'Unknown Wholesaler';
+      const wsInit  = wsName.charAt(0).toUpperCase();
+      const wsColor = avatarColor(ws._id || wsName);
+      const isVerif = !!(ws.name && ws.mobileNumber && ws.gstNumber && ws.houseNo);
+      const isOOS   = p.stock === 0;
+      let sBadge = 'in', sLabel = 'In Stock';
+      if (isOOS)            { sBadge = 'out'; sLabel = 'Out of Stock'; }
+      else if (p.stock<=10) { sBadge = 'low'; sLabel = 'Low Stock'; }
+      const imgHtml = p.image
+        ? `<img class="p-img" src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'p-img-placeholder\\'>${p.name?.charAt(0).toUpperCase()||'?'}</div>'">`
+        : `<div class="p-img-placeholder">${p.name?.charAt(0).toUpperCase()||'?'}</div>`;
+      const card = document.createElement('div');
+      card.className = 'p-card';
+      card.innerHTML = `
+        <div class="p-img-area">
+          ${imgHtml}
+          ${p.category ? `<div class="cat-badge">${p.category}</div>` : ''}
+          <div class="stock-badge ${sBadge}">${sLabel}</div>
+          ${isOOS ? '<div class="oos-overlay"><div class="oos-tag">Out of Stock</div></div>' : ''}
+        </div>
+        <div class="p-body">
+          <div class="p-name">${p.name || 'Unnamed Product'}</div>
+          <div class="p-price-row">
+            <span class="p-price">₹${(p.pricePerUnit||0).toLocaleString('en-IN')}</span>
+            <span class="p-unit">per ${p.unit||'unit'}</span>
+          </div>
+          <div class="p-meta">
+            ${p.moq ? `<div><i class="fas fa-layer-group"></i> MOQ: ${p.moq} units</div>` : ''}
+            <div><i class="fas fa-cubes"></i> Stock: ${p.stock > 0 ? p.stock + ' units' : '<span style="color:#ef233c">Out of Stock</span>'}</div>
+          </div>
+          <div class="ws-row">
+            <div class="ws-av" style="background:${wsColor}">${wsInit}</div>
+            <span class="ws-name">${wsName}</span>
+            ${isVerif ? '<i class="fas fa-check-circle ws-verified" title="Verified"></i>' : ''}
+          </div>
+        </div>
+        <div class="p-actions">
+          <a href="#" class="btn-inquire ${isOOS ? 'disabled' : ''}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${encodeURIComponent(p.name)}', ${p.pricePerUnit || 0}, ${p.moq || 1}, ${p.stock || 0}); return false;">
+            <i class="fas fa-paper-plane"></i> Inquire
+          </a>
+          <button class="btn-ws" onclick="location.href='items.html?id=${p.wholesalerId}'">
+            <i class="fas fa-store"></i> View Wholesaler
+          </button>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function attemptInquire(e, wsId, pId, pName, price, moq, stock) {
+    e.preventDefault();
+    const u = JSON.parse(localStorage.getItem('user'));
+    if (!u) { window.location.href = 'login.html'; return; }
+    if (u.role === 'wholesaler') { showToast('Wholesalers cannot send inquiries.', 'err'); return; }
+    if (!u.emailVerified) { alert('Email verification required to send inquiries. Please verify your email from your Profile page.'); return; }
+    if (e.currentTarget.classList.contains('disabled')) return;
+    window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${pName}&price=${price}&moq=${moq}&stock=${stock}`;
+  }
+
+  function setCat(cat, el) {
+    state.category = cat;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+  }
+
+  function resetFilters() {
+    state.search = ''; state.category = ''; state.stock = 'all'; state.sort = 'newest';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sortSelect').value  = 'newest';
+    document.getElementById('clearSearch').style.display = 'none';
+    document.querySelectorAll('.chip').forEach(c  => c.classList.toggle('active', c.dataset.cat === ''));
+    document.querySelectorAll('.stock-pill').forEach(p => p.classList.toggle('active', p.dataset.val === 'all'));
+    applyFilters();
+  }
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    state.search = e.target.value;
+    document.getElementById('clearSearch').style.display = state.search ? 'block' : 'none';
+    applyFilters();
+  });
+  document.getElementById('clearSearch').addEventListener('click', () => {
+    state.search = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('clearSearch').style.display = 'none';
+    applyFilters();
+  });
+  document.getElementById('sortSelect').addEventListener('change', e => { state.sort = e.target.value; applyFilters(); });
+  document.querySelectorAll('.chip').forEach(c => { c.addEventListener('click', () => setCat(c.dataset.cat, c)); });
+  document.querySelectorAll('.stock-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      state.stock = p.dataset.val;
+      document.querySelectorAll('.stock-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      applyFilters();
+    });
+  });
+
+  fetchProducts();
+
+  if (user && token && user.role === 'retailer') {
+    const recSection = document.getElementById('recSection');
+    const recStrip   = document.getElementById('recStrip');
+    recSection.style.display = 'block';
+    fetch('/api/recommendations', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success || !data.recommendations || data.recommendations.length === 0) { recSection.style.display = 'none'; return; }
+        const wsColors = ['#4361ee','#7209b7','#f72585','#e36414','#2bc155'];
+        recStrip.innerHTML = data.recommendations.map(r => {
+          const wsName = r.wholesalerId ? (r.wholesalerId.businessName || r.wholesalerId.name || 'Supplier') : 'Supplier';
+          const wsBg   = wsColors[(wsName.length) % wsColors.length];
+          const imgHTML = r.image
+            ? `<img src="${r.image}" style="width:100%;height:110px;object-fit:cover;display:block;">`
+            : `<div style="width:100%;height:110px;background:linear-gradient(135deg,#e0e7ff,#f0f4ff);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#4361ee;font-family:'Syne',sans-serif;">${(r.name||'P').charAt(0)}</div>`;
+          return `
+          <a href="browse-products.html" style="min-width:180px;max-width:180px;border-radius:12px;overflow:hidden;border:1.5px solid #f1f5f9;text-decoration:none;color:inherit;flex-shrink:0;background:white;transition:all 0.25s;display:flex;flex-direction:column;" onmouseover="this.style.borderColor='#4361ee';this.style.boxShadow='0 8px 24px rgba(67,97,238,0.15)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='#f1f5f9';this.style.boxShadow='none';this.style.transform='none'">
+            ${imgHTML}
+            <div style="padding:10px;flex:1;display:flex;flex-direction:column;gap:3px;">
+              <div style="font-weight:700;font-size:12px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Syne',sans-serif;">${r.name}</div>
+              <div style="font-size:13px;font-weight:700;color:#4361ee;">&#8377;${r.pricePerUnit}<span style="font-size:10px;font-weight:400;color:#94a3b8;">/${r.unit}</span></div>
+              <div style="font-size:10px;color:#64748b;background:#f8fafc;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:2px;">${r.category || 'Product'}</div>
+              <div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
+                <div style="width:18px;height:18px;border-radius:4px;background:${wsBg};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;">${wsName.charAt(0)}</div>
+                <span style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${wsName}</span>
+              </div>
+              <div style="margin-top:4px;font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(67,97,238,0.08);color:#4361ee;font-weight:600;display:inline-block;">&#10024; ${r.reason}</div>
+            </div>
+          </a>`;
+        }).join('');
+      })
+      .catch(() => { recSection.style.display = 'none'; });
+  }
+
+  document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('hidden');
+  });
+</script>
+</body>
+</html>
