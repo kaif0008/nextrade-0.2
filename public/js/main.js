@@ -99,7 +99,7 @@ async function postRequirement() {
     }
 
     try {
-        const res = await fetch('/api/requirements', {
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/requirements', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ async function loadRequirements() {
     if (!reqList) return;
     
     try {
-        const res = await fetch('/api/requirements', {
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/requirements', {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await res.json();

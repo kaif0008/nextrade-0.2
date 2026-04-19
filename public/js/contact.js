@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             
             try {
-                const response = await fetch('/api/contact', {
+                const response = await fetch(CONFIG.API_BASE_URL + '/api/contact', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

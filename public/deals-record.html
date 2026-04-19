@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <title>NexTrade | Deals Record</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -177,7 +178,7 @@
 
     async function fetchDeals() {
       try {
-        const res  = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res  = await fetch(CONFIG.API_BASE_URL + '/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) { allDeals = data.deals; renderDeals(); }
       } catch (err) { console.error('Error fetching deals', err); }

@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -166,6 +167,7 @@ const authLimiter = rateLimit({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cors()); // Allow all origins for now; can be restricted via FRONTEND_URL env var later
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ================= STORAGE CONFIG (CLOUDINARY) =================
@@ -2388,7 +2390,10 @@ const PORT = process.env.PORT || DEFAULT_PORT;
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: "*" }, // Open for production, can be restricted later if needed
+  cors: { 
+    origin: "*", // Required for cross-domain socket connections
+    methods: ["GET", "POST"]
+  },
   maxHttpBufferSize: 1e7 // Support up to 10MB
 });
 

@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addTypingIndicator(typingId);
 
     try {
-      const resp = await fetch('/api/ai/chat', {
+      const resp = await fetch(CONFIG.API_BASE_URL + '/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

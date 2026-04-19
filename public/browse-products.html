@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NexTrade | Explore Products</title>
@@ -280,7 +281,7 @@
   async function fetchProducts() {
     showSkeletons();
     try {
-      const [pRes, wRes] = await Promise.all([fetch('/api/products'), fetch('/api/wholesalers')]);
+      const [pRes, wRes] = await Promise.all([fetch(CONFIG.API_BASE_URL + '/api/products'), fetch(CONFIG.API_BASE_URL + '/api/wholesalers')]);
       const [pData, wData] = await Promise.all([pRes.json(), wRes.json()]);
       if (!pData.success) throw new Error();
       if (wData.success) { wData.wholesalers.forEach(w => { state.wsMap[w._id] = w; }); }
@@ -436,7 +437,7 @@
     const recSection = document.getElementById('recSection');
     const recStrip   = document.getElementById('recStrip');
     recSection.style.display = 'block';
-    fetch('/api/recommendations', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(CONFIG.API_BASE_URL + '/api/recommendations', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
         if (!data.success || !data.recommendations || data.recommendations.length === 0) { recSection.style.display = 'none'; return; }

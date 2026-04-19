@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nextrade Admin Dashboard</title>
@@ -725,7 +726,7 @@
         // ---------------- API CALLS ----------------
         async function loadAnalytics() {
             try {
-                const res = await fetch('/api/admin/analytics', { headers: getAuthHeaders() });
+                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/analytics', { headers: getAuthHeaders() });
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('stat-users').textContent = data.analytics.totalUsers;
@@ -742,7 +743,7 @@
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
             try {
-                const res = await fetch('/api/admin/users', { headers: getAuthHeaders() });
+                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/users', { headers: getAuthHeaders() });
                 const data = await res.json();
                 if (data.success) {
                     window.allUsers = data.users; // store for search
@@ -786,7 +787,7 @@
             const tbody = document.getElementById('productsTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
             try {
-                const res = await fetch('/api/admin/products', { headers: getAuthHeaders() });
+                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/products', { headers: getAuthHeaders() });
                 const data = await res.json();
                 if (data.success) {
                     renderProducts(data.products);
@@ -823,7 +824,7 @@
             const tbody = document.getElementById('dealsTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
             try {
-                const res = await fetch('/api/admin/deals', { headers: getAuthHeaders() });
+                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/deals', { headers: getAuthHeaders() });
                 const data = await res.json();
                 if (data.success) {
                     renderDeals(data.deals);
@@ -857,7 +858,7 @@
             const tbody = document.getElementById('reqsTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
             try {
-                const res = await fetch('/api/admin/requirements', { headers: getAuthHeaders() });
+                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/requirements', { headers: getAuthHeaders() });
                 const data = await res.json();
                 if (data.success) {
                     renderReqs(data.requirements);
@@ -889,7 +890,7 @@
             const tbody = document.getElementById('reviewsTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
             try {
-                const res = await fetch('/api/admin/reviews', { headers: getAuthHeaders() });
+                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/reviews', { headers: getAuthHeaders() });
                 const data = await res.json();
                 if (data.success) {
                     renderReviews(data.reviews);

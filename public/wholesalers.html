@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wholesalers | NexTrade</title>
@@ -253,7 +254,7 @@
       async function loadData() {
         showSkeletons();
         try {
-          const res = await fetch("/api/wholesalers");
+          const res = await fetch(CONFIG.API_BASE_URL + "/api/wholesalers");
           const data = await res.json();
           if(!data.success) throw new Error("Failed");
           state.all = data.wholesalers;

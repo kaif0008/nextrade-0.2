@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="js/config.js"></script>
   <meta charset="UTF-8">
   <title>NexTrade | My Requirements</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -210,7 +211,7 @@
     async function loadMyRequirements() {
       const list = document.getElementById('reqList');
       try {
-        const res  = await fetch('/api/requirements/my', { headers:{ 'Authorization': `Bearer ${token}` } });
+        const res  = await fetch(CONFIG.API_BASE_URL + '/api/requirements/my', { headers:{ 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
           if (data.requirements.length === 0) {
@@ -251,7 +252,7 @@
 
     async function openEditModal(id) {
       try {
-        const res  = await fetch('/api/requirements/my', { headers:{ Authorization:`Bearer ${token}` } });
+        const res  = await fetch(CONFIG.API_BASE_URL + '/api/requirements/my', { headers:{ Authorization:`Bearer ${token}` } });
         const data = await res.json();
         const req  = data.requirements.find(r => r._id === id);
         if (!req) return;
