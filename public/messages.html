@@ -540,7 +540,7 @@
                 var msgs = { wholesaler_accepted: 'Deal accepted! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal rejected ❌' };
                 showToast(msgs[status] || 'Deal updated', status==='confirmed'?'success':status==='rejected'?'error':'info');
                 openChat(currentUser, document.getElementById('chatTitle').innerText);
-                if (status === 'confirmed' && user.role === 'retailer') setTimeout(function(){ openRatingModal(currentUser, dealId); }, 1200);
+                if (status === 'confirmed' && user.role === 'retailer') setTimeout(function(){ if(document.getElementById("ratingModal").style.display !== "flex") openRatingModal(currentUser, dealId); }, 1200);
             } else showToast(data.message || 'Action failed', 'error');
         } catch(e) { console.error(e); showToast('Network error', 'error'); }
     }
@@ -578,6 +578,7 @@
             openChat(currentUser, document.getElementById("chatTitle").innerText);
             var msgs = { wholesaler_accepted: 'Wholesaler accepted the deal! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal rejected ❌' };
             showToast(msgs[deal && deal.status] || 'Deal status changed', deal && deal.status==='confirmed'?'success':deal && deal.status==='rejected'?'error':'info');
+            if (deal && deal.status === 'confirmed' && user.role === 'retailer') setTimeout(function(){ if(document.getElementById("ratingModal").style.display !== "flex") openRatingModal(currentUser, deal._id); }, 1200);
         }
     });
     socket.on("message_status_update", function(data) {

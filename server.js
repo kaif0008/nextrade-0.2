@@ -8,7 +8,7 @@ require('dotenv').config();
 const nodemailer = require('nodemailer');
 const dns = require('dns');
 
-// Force IPv4 as default to avoid ENETUNREACH (IPv6) errors on cloud providers like Render
+// Force IPv4
 if (typeof dns.setDefaultResultOrder === 'function') {
   dns.setDefaultResultOrder('ipv4first');
 }
