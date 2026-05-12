@@ -43,6 +43,43 @@ const ipv4Lookup = (hostname, options, callback) => {
   return dns.lookup(hostname, { family: 4 }, callback);
 };
 
+// ================= TWILIO CONFIG =================
+const twilio = require('twilio');
+let twilioClient;
+if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+  try {
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    console.log('✅ Twilio Client initialized');
+  } catch (err) {
+    console.error('❌ Twilio Initialization Error:', err.message);
+  }
+} else {
+  console.log('⚠️ Twilio credentials missing in .env. SMS OTP will not work.');
+}
+
+async function sendSMS(to, message) {
+  if (!twilioClient || !process.env.TWILIO_PHONE_NUMBER) {
+    console.warn("SMS not sent. Twilio is not configured properly.");
+    return false;
+  }
+  try {
+    // Ensure the number is formatted (add +91 for India if not present)
+    let formattedNumber = to;
+    if (!formattedNumber.startsWith('+')) {
+      formattedNumber = '+91' + formattedNumber;
+    }
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: formattedNumber
+    });
+    return true;
+  } catch (err) {
+    console.error("❌ Twilio SMS Error:", err.message);
+    return false;
+  }
+}
+
 // const emailTransporter = nodemailer.createTransport({
 //   host: 'smtp.gmail.com',
 //   port: 465,
@@ -258,11 +295,16 @@ const userSchema = new mongoose.Schema({
   otpCode: String,
   otpExpiry: Date,
   otpAttempts: { type: Number, default: 0 },
-  otpRequestedAt: Date
+  otpRequestedAt: Date,
+  // GST Verification
+  gstVerificationStatus: { type: String, enum: ['not_submitted', 'pending', 'verified', 'rejected'], default: 'not_submitted' },
+  gstRejectionReason: String,
+  gstSubmittedAt: Date
 }, { timestamps: true });
 
 userSchema.index({ name: 1 });
 userSchema.index({ role: 1 });
+userSchema.index({ mobileNumber: 1 }, { unique: true, sparse: true });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
@@ -277,6 +319,14 @@ userSchema.methods.toJSON = function () {
 };
 
 const User = mongoose.model('User', userSchema);
+
+// OTP Verification (Temporary storage for signup)
+const otpVerificationSchema = new mongoose.Schema({
+  mobileNumber: { type: String, required: true },
+  otpCode: { type: String, required: true },
+  expiresAt: { type: Date, required: true, index: { expires: 0 } }
+});
+const OtpVerification = mongoose.model('OtpVerification', otpVerificationSchema);
 
 // Product
 const productSchema = new mongoose.Schema({
@@ -367,6 +417,21 @@ const contactMessageSchema = new mongoose.Schema({
 
 const ContactMessage = mongoose.model('ContactMessage', contactMessageSchema);
 
+// Invoice Counter (global auto-increment for invoice numbers)
+const invoiceCounterSchema = new mongoose.Schema({
+  _id: { type: String, default: 'invoice_seq' },
+  seq: { type: Number, default: 0 }
+});
+const InvoiceCounter = mongoose.model('InvoiceCounter', invoiceCounterSchema);
+
+// Invoice Assignment (maps dealId → invoice number)
+const invoiceAssignmentSchema = new mongoose.Schema({
+  dealId: { type: mongoose.Schema.Types.ObjectId, ref: 'Deal', unique: true },
+  invoiceNumber: { type: String },  // e.g. "NT-26-0001"
+  seq: Number,
+  issuedAt: { type: Date, default: Date.now }
+});
+const InvoiceAssignment = mongoose.model('InvoiceAssignment', invoiceAssignmentSchema);
 
 // ================= ROUTES =================
 const router = express.Router();
@@ -389,20 +454,61 @@ const requireEmailVerified = async (req, res, next) => {
 };
 
 // ---------- AUTH ----------
+router.post('/auth/send-signup-otp', authLimiter, async (req, res) => {
+  try {
+    const { mobileNumber } = req.body;
+    if (!mobileNumber) return res.status(400).json({ success: false, message: 'Mobile number is required' });
+
+    const existingUser = await User.findOne({ mobileNumber });
+    if (existingUser) return res.status(400).json({ success: false, message: 'Mobile number already registered' });
+
+    // Clean up old OTPs for this number
+    await OtpVerification.deleteMany({ mobileNumber });
+
+    const otp = generateOTP();
+    const hashedOtp = await bcrypt.hash(otp, 8);
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    const newOtp = new OtpVerification({
+      mobileNumber,
+      otpCode: hashedOtp,
+      expiresAt: expiry
+    });
+    await newOtp.save();
+
+    const smsSent = await sendSMS(mobileNumber, `Your NexTrade verification code is ${otp}. It expires in 10 minutes.`);
+    if (smsSent) {
+      res.json({ success: true, message: `OTP sent to ${mobileNumber}` });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send SMS OTP. Check Twilio configuration.' });
+    }
+  } catch (err) {
+    console.error('Send Signup OTP error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send OTP.' });
+  }
+});
+
 router.post('/signup', authLimiter, upload.single('photo'), async (req, res) => {
   try {
-    const { name, email, password, role, gstNumber } = req.body;
+    const { name, email, password, role, gstNumber, mobileNumber, otp } = req.body;
     const photoUrl = req.file ? req.file.path : null;
 
-    // âœ… Basic validation
-    if (!name || !email || !password || !role) {
+    // ✅ Basic validation
+    if (!name || !email || !password || !role || !mobileNumber || !otp) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required"
+        message: "All fields including Mobile Number and OTP are required"
       });
     }
 
-    // âœ… GST rule
+    // Verify OTP
+    const otpRecord = await OtpVerification.findOne({ mobileNumber });
+    if (!otpRecord) return res.status(400).json({ success: false, message: 'OTP expired or not found. Please request a new one.' });
+
+    const isMatch = await bcrypt.compare(otp.trim(), otpRecord.otpCode);
+    if (!isMatch) return res.status(400).json({ success: false, message: 'Incorrect OTP' });
+
+    // ✅ GST rule
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
     // Wholesaler â†’ GST required + valid
@@ -425,27 +531,29 @@ router.post('/signup', authLimiter, upload.single('photo'), async (req, res) => 
       }
     }
 
-    // âœ… Check existing user
-    const existingUser = await User.findOne({ email });
+    // ✅ Check existing user
+    const existingUser = await User.findOne({ $or: [{ email }, { mobileNumber }] });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists"
+        message: "User already exists with this email or mobile number"
       });
     }
 
-    // âœ… Create user
+    // ✅ Create user
     const user = new User({
       name,
       email,
       password,
       role,
       gstNumber,
+      mobileNumber,
       photoUrl
     });
 
     await user.save();
+    await OtpVerification.deleteMany({ mobileNumber }); // Clean up OTP record
 
     res.status(201).json({
       success: true,
@@ -543,15 +651,12 @@ router.post('/auth/verify-otp', authMiddleware, async (req, res) => {
 
 router.post('/auth/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+    const { loginId } = req.body;
+    if (!loginId) return res.status(400).json({ success: false, message: 'Email or Mobile Number is required' });
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ $or: [{ email: loginId }, { mobileNumber: loginId }] });
     if (!user) {
-      // For security, don't reveal if user exists or not, but in some B2B contexts it's fine.
-      // However, usually we say "If an account exists, an OTP has been sent."
-      // For this demo, we'll be explicit for better UX.
-      return res.status(404).json({ success: false, message: 'No account found with this email' });
+      return res.status(404).json({ success: false, message: 'No account found with this credential' });
     }
 
     const otp = generateOTP();
@@ -564,9 +669,17 @@ router.post('/auth/forgot-password', async (req, res) => {
     user.otpRequestedAt = new Date();
     await user.save();
 
-    await sendOTPEmail(user.email, otp, user.name);
-
-    res.json({ success: true, message: `Password reset OTP sent to ${user.email}` });
+    if (loginId.includes('@')) {
+      await sendOTPEmail(user.email, otp, user.name);
+      res.json({ success: true, message: `Password reset OTP sent to ${user.email}` });
+    } else {
+      const smsSent = await sendSMS(user.mobileNumber, `Your NexTrade password reset code is ${otp}. It expires in 10 minutes.`);
+      if (smsSent) {
+        res.json({ success: true, message: `Password reset OTP sent to ${user.mobileNumber}` });
+      } else {
+        res.status(500).json({ success: false, message: 'Failed to send SMS OTP. Check Twilio configuration.' });
+      }
+    }
   } catch (err) {
     console.error('Forgot password error:', err);
     res.status(500).json({ success: false, message: 'Failed to send reset OTP' });
@@ -575,12 +688,12 @@ router.post('/auth/forgot-password', async (req, res) => {
 
 router.post('/auth/reset-password', async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
-    if (!email || !otp || !newPassword) {
+    const { loginId, otp, newPassword } = req.body;
+    if (!loginId || !otp || !newPassword) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ $or: [{ email: loginId }, { mobileNumber: loginId }] });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     // Check expiry
@@ -613,9 +726,9 @@ router.post('/auth/reset-password', async (req, res) => {
 });
 
 router.post('/login', authLimiter, async (req, res) => {
-  const { email, password } = req.body;
+  const { loginId, password } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ $or: [{ email: loginId }, { mobileNumber: loginId }] });
   if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -1351,6 +1464,18 @@ router.patch('/deals/:id/status', authMiddleware, requireEmailVerified, async (r
     const userId = req.user.id;
     const isWholesaler = userId === String(deal.wholesalerId);
     const isRetailer = userId === String(deal.retailerId);
+
+    // GST gate: wholesaler must be verified to accept or confirm deals
+    if (isWholesaler && (status === 'wholesaler_accepted' || status === 'confirmed')) {
+      const wholesalerUser = await User.findById(userId);
+      if (!wholesalerUser || wholesalerUser.gstVerificationStatus !== 'verified') {
+        return res.status(403).json({
+          success: false,
+          code: 'GST_NOT_VERIFIED',
+          message: 'Your GST must be verified before you can accept or confirm deals. Please submit your GST number for verification from your Profile page.'
+        });
+      }
+    }
 
     let finalStatus = null;
 
@@ -2376,6 +2501,307 @@ router.delete('/admin/reviews/:id', authMiddleware, adminMiddleware, async (req,
     res.json({ success: true, message: 'Review deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to delete review' });
+  }
+});
+
+// ================= INVOICE ENDPOINT =================
+
+// Get invoice data for a confirmed deal (JWT-secured, only deal participants)
+router.get('/invoice/:dealId', authMiddleware, async (req, res) => {
+  try {
+    const deal = await Deal.findById(req.params.dealId)
+      .populate('retailerId',   'name businessName email mobileNumber houseNo street block city state pincode country')
+      .populate('wholesalerId', 'name businessName email mobileNumber houseNo street block city state pincode country');
+
+    if (!deal) return res.status(404).json({ success: false, message: 'Deal not found' });
+    if (deal.status !== 'confirmed') return res.status(400).json({ success: false, message: 'Invoice only available for confirmed deals' });
+
+    const userId = req.user.id;
+    const isParticipant = String(deal.retailerId?._id) === userId || String(deal.wholesalerId?._id) === userId;
+    if (!isParticipant) return res.status(403).json({ success: false, message: 'Unauthorized' });
+
+    // Assign or retrieve invoice number
+    let assignment = await InvoiceAssignment.findOne({ dealId: deal._id });
+    if (!assignment) {
+      // Atomically increment global counter
+      const counter = await InvoiceCounter.findByIdAndUpdate(
+        'invoice_seq',
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      const yy  = String(new Date().getFullYear()).slice(-2);
+      const num = String(counter.seq).padStart(4, '0');
+      assignment = await InvoiceAssignment.create({
+        dealId: deal._id,
+        invoiceNumber: `NT-${yy}-${num}`,
+        seq: counter.seq,
+        issuedAt: new Date()
+      });
+    }
+
+    res.json({
+      success: true,
+      invoice: {
+        invoiceNumber: assignment.invoiceNumber,
+        dealId: assignment.invoiceNumber.split('-').pop(), // last 4 digits
+        issuedAt: assignment.issuedAt,
+        deal: {
+          _id: deal._id,
+          productName: deal.productName,
+          productImage: deal.productImage,
+          quantity: deal.quantity,
+          offeredPrice: deal.offeredPrice,
+          listPrice: deal.listPrice,
+          status: deal.status,
+          createdAt: deal.createdAt,
+          updatedAt: deal.updatedAt
+        },
+        wholesaler: deal.wholesalerId,
+        retailer: deal.retailerId
+      }
+    });
+  } catch (err) {
+    console.error('Invoice error:', err);
+    res.status(500).json({ success: false, message: 'Failed to generate invoice data' });
+  }
+});
+
+// ================= GST VERIFICATION ENDPOINTS =================
+
+const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+// User: Submit GST number for verification
+router.post('/gst/submit', authMiddleware, async (req, res) => {
+  try {
+    const { gstNumber } = req.body;
+    if (!gstNumber) return res.status(400).json({ success: false, message: 'GST number is required' });
+
+    const gst = gstNumber.trim().toUpperCase();
+    if (!GST_REGEX.test(gst)) {
+      return res.status(400).json({ success: false, message: 'Invalid GSTIN format. Must be 15 characters (e.g. 22ABCDE1234F1Z5)' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.gstVerificationStatus === 'verified') {
+      return res.status(400).json({ success: false, message: 'Your GST is already verified' });
+    }
+    if (user.gstVerificationStatus === 'pending') {
+      return res.status(400).json({ success: false, message: 'A verification request is already pending. Please wait for admin review.' });
+    }
+
+    user.gstNumber = gst;
+    user.gstVerificationStatus = 'pending';
+    user.gstRejectionReason = undefined;
+    user.gstSubmittedAt = new Date();
+    await user.save();
+
+    res.json({ success: true, message: 'GST submitted successfully. Pending admin verification.', gstVerificationStatus: 'pending' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to submit GST' });
+  }
+});
+
+// User: Get own GST verification status
+router.get('/gst/status', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('gstNumber gstVerificationStatus gstRejectionReason gstSubmittedAt');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({
+      success: true,
+      gstNumber: user.gstNumber,
+      gstVerificationStatus: user.gstVerificationStatus || 'not_submitted',
+      gstRejectionReason: user.gstRejectionReason,
+      gstSubmittedAt: user.gstSubmittedAt
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch GST status' });
+  }
+});
+
+// Admin: Get all GST verification requests
+router.get('/admin/gst-verifications', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const filter = {};
+    if (status && status !== 'all') filter.gstVerificationStatus = status;
+    else filter.gstVerificationStatus = { $in: ['pending', 'verified', 'rejected'] };
+
+    const users = await User.find(filter)
+      .select('name businessName email role gstNumber gstVerificationStatus gstRejectionReason gstSubmittedAt')
+      .sort({ gstSubmittedAt: -1 });
+
+    // Counts for each status
+    const counts = await User.aggregate([
+      { $match: { gstVerificationStatus: { $in: ['pending', 'verified', 'rejected'] } } },
+      { $group: { _id: '$gstVerificationStatus', count: { $sum: 1 } } }
+    ]);
+    const summary = { pending: 0, verified: 0, rejected: 0 };
+    counts.forEach(c => { summary[c._id] = c.count; });
+
+    res.json({ success: true, users, summary });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch GST verifications' });
+  }
+});
+
+// Admin: Approve GST
+router.post('/admin/gst-verifications/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (!user.gstNumber) return res.status(400).json({ success: false, message: 'No GST number on file' });
+
+    user.gstVerificationStatus = 'verified';
+    user.gstRejectionReason = undefined;
+    await user.save();
+
+    res.json({ success: true, message: `GST verified for ${user.name}` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to approve GST' });
+  }
+});
+
+// Admin: Reject GST with reason
+router.post('/admin/gst-verifications/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.gstVerificationStatus = 'rejected';
+    user.gstRejectionReason = reason.trim();
+    await user.save();
+
+    res.json({ success: true, message: `GST rejected for ${user.name}` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to reject GST' });
+  }
+});
+
+// ================= REPORTING ENDPOINTS =================
+
+// Wholesaler — Product Inventory Report
+router.get('/reports/wholesaler/inventory', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'wholesaler') {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+  try {
+    const { startDate, endDate } = req.query;
+    const query = { wholesalerId: req.user.id };
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
+    const products = await Product.find(query).sort({ createdAt: -1 }).lean();
+
+    const summary = {
+      totalProducts: products.length,
+      totalStock: products.reduce((s, p) => s + (p.stock || 0), 0),
+      totalReservedStock: products.reduce((s, p) => s + (p.reservedStock || 0), 0)
+    };
+
+    res.json({ success: true, products, summary });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to generate inventory report' });
+  }
+});
+
+// Wholesaler — Deals Report
+router.get('/reports/wholesaler/deals', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'wholesaler') {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+  try {
+    const { startDate, endDate } = req.query;
+    const query = { wholesalerId: req.user.id };
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
+    const deals = await Deal.find(query)
+      .populate('retailerId', 'name mobileNumber email businessName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const completed = deals.filter(d => d.status === 'confirmed').length;
+    const pending   = deals.filter(d => ['pending', 'wholesaler_updated', 'wholesaler_accepted'].includes(d.status)).length;
+    const rejected  = deals.filter(d => d.status === 'rejected').length;
+    const revenue   = deals
+      .filter(d => d.status === 'confirmed')
+      .reduce((s, d) => s + ((d.offeredPrice || 0) * (d.quantity || 0)), 0);
+
+    const summary = {
+      totalDeals: deals.length,
+      completedDeals: completed,
+      pendingDeals: pending,
+      rejectedDeals: rejected,
+      totalRevenue: revenue
+    };
+
+    res.json({ success: true, deals, summary });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to generate deals report' });
+  }
+});
+
+// Retailer — Deal History Report
+router.get('/reports/retailer/deals', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'retailer') {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+  try {
+    const { startDate, endDate } = req.query;
+    const query = { retailerId: req.user.id };
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
+    const deals = await Deal.find(query)
+      .populate('wholesalerId', 'name businessName mobileNumber email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const completed = deals.filter(d => d.status === 'confirmed').length;
+    const pending   = deals.filter(d => ['pending', 'wholesaler_updated', 'wholesaler_accepted'].includes(d.status)).length;
+    const spending  = deals
+      .filter(d => d.status === 'confirmed')
+      .reduce((s, d) => s + ((d.offeredPrice || 0) * (d.quantity || 0)), 0);
+
+    const summary = {
+      totalDeals: deals.length,
+      completedDeals: completed,
+      pendingDeals: pending,
+      totalSpending: spending
+    };
+
+    res.json({ success: true, deals, summary });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to generate retailer deals report' });
   }
 });
 

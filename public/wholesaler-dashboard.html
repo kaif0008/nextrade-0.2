@@ -41,6 +41,36 @@
     .notif-item { padding:12px 15px; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:10px; transition:.2s; }
     .notif-item:hover { background:#f8fafc; }
     .notif-icon { width:30px; height:30px; border-radius:8px; background:rgba(239,35,60,.1); color:#ef233c; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    /* ── Report Modal ── */
+    #reportModalBg { position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px; }
+    #reportModal { background:#fff;border-radius:24px;width:100%;max-width:780px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.2); }
+    .rpt-header { background:linear-gradient(135deg,#4361ee,#4895ef);padding:28px 32px;border-radius:24px 24px 0 0;display:flex;align-items:center;justify-content:space-between; }
+    .rpt-header h2 { color:#fff;font-size:20px;font-weight:700;margin:0; }
+    .rpt-header p { color:rgba(255,255,255,.8);font-size:13px;margin:4px 0 0; }
+    .rpt-close { width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s; }
+    .rpt-close:hover { background:rgba(255,255,255,.35); }
+    .rpt-body { padding:28px 32px;display:flex;flex-direction:column;gap:24px; }
+    .rpt-card { border:1px solid #e2e8f0;border-radius:16px;overflow:hidden; }
+    .rpt-card-header { background:#f8fafc;padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e2e8f0; }
+    .rpt-card-icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+    .rpt-card-title { font-weight:700;font-size:15px;color:#0f172a; }
+    .rpt-card-sub { font-size:12px;color:#94a3b8;margin-top:2px; }
+    .rpt-card-body { padding:20px; }
+    .rpt-filters { display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+    .rpt-input { flex:1;min-width:140px;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Poppins',sans-serif;color:#334155;outline:none;transition:.2s; }
+    .rpt-input:focus { border-color:#4361ee;box-shadow:0 0 0 3px rgba(67,97,238,.1); }
+    .rpt-input label { font-size:11px;color:#94a3b8;display:block;margin-bottom:4px;font-weight:600;text-transform:uppercase; }
+    .rpt-field { display:flex;flex-direction:column;flex:1;min-width:140px; }
+    .rpt-field label { font-size:11px;color:#94a3b8;display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px; }
+    .rpt-btns { display:flex;gap:10px;flex-wrap:wrap; }
+    .rpt-btn { display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Poppins',sans-serif; }
+    .rpt-btn-pdf { background:linear-gradient(135deg,#ef233c,#e5173f);color:#fff; }
+    .rpt-btn-pdf:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(239,35,60,.35); }
+    .rpt-btn-excel { background:linear-gradient(135deg,#2bc155,#23a847);color:#fff; }
+    .rpt-btn-excel:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(43,193,85,.35); }
+    .rpt-btn:disabled { opacity:.65;cursor:not-allowed;transform:none !important;box-shadow:none !important; }
+    .rpt-btn .spin { animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
   </style>
 </head>
 
@@ -120,6 +150,12 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Get Report Button -->
+        <button onclick="document.getElementById('reportModalBg').style.display='flex'"
+                class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary-dark transition shadow-sm">
+          <i class="fas fa-file-alt"></i>
+          <span class="hidden sm:inline">Get Report</span>
+        </button>
         <!-- Notification Bell -->
         <div class="relative" id="notifWrapper">
           <button id="notifBtn"
@@ -358,6 +394,84 @@
     </div>
   </main>
 
+  <!-- ══════════ REPORT MODAL ══════════ -->
+  <div id="reportModalBg" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+    <div id="reportModal">
+      <div class="rpt-header">
+        <div>
+          <h2><i class="fas fa-chart-bar" style="margin-right:10px;"></i>Business Reports</h2>
+          <p>Export your data as PDF or Excel</p>
+        </div>
+        <button class="rpt-close" onclick="document.getElementById('reportModalBg').style.display='none'">&#x2715;</button>
+      </div>
+      <div class="rpt-body">
+
+        <!-- Card 1: Product Inventory -->
+        <div class="rpt-card">
+          <div class="rpt-card-header">
+            <div class="rpt-card-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-boxes"></i></div>
+            <div>
+              <div class="rpt-card-title">Product Inventory Report</div>
+              <div class="rpt-card-sub">All your products with stock, price and sales data</div>
+            </div>
+          </div>
+          <div class="rpt-card-body">
+            <div class="rpt-filters">
+              <div class="rpt-field">
+                <label>Start Date</label>
+                <input type="date" id="invStartDate" class="rpt-input">
+              </div>
+              <div class="rpt-field">
+                <label>End Date</label>
+                <input type="date" id="invEndDate" class="rpt-input">
+              </div>
+            </div>
+            <div class="rpt-btns">
+              <button id="invPdfBtn" class="rpt-btn rpt-btn-pdf" onclick="generateInventoryPDF()">
+                <i class="fas fa-file-pdf"></i> Download PDF Report
+              </button>
+              <button id="invXlsBtn" class="rpt-btn rpt-btn-excel" onclick="generateInventoryExcel()">
+                <i class="fas fa-file-excel"></i> Download Excel Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Deal Report -->
+        <div class="rpt-card">
+          <div class="rpt-card-header">
+            <div class="rpt-card-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-handshake"></i></div>
+            <div>
+              <div class="rpt-card-title">Deal Report</div>
+              <div class="rpt-card-sub">All retailer deals with status and revenue data</div>
+            </div>
+          </div>
+          <div class="rpt-card-body">
+            <div class="rpt-filters">
+              <div class="rpt-field">
+                <label>Start Date</label>
+                <input type="date" id="dealStartDate" class="rpt-input">
+              </div>
+              <div class="rpt-field">
+                <label>End Date</label>
+                <input type="date" id="dealEndDate" class="rpt-input">
+              </div>
+            </div>
+            <div class="rpt-btns">
+              <button id="dealPdfBtn" class="rpt-btn rpt-btn-pdf" onclick="generateDealsPDF()">
+                <i class="fas fa-file-pdf"></i> Download PDF
+              </button>
+              <button id="dealXlsBtn" class="rpt-btn rpt-btn-excel" onclick="generateDealsExcel()">
+                <i class="fas fa-file-excel"></i> Download Excel
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -406,16 +520,22 @@
     document.getElementById("topAvatar").innerText = initial;
     document.getElementById("mainAvatar").innerText = initial;
 
-    const isValid = (val) => val && typeof val === 'string' && val.trim() !== "";
-    const isProfileComplete =
-      isValid(user.name) && isValid(user.mobileNumber) &&
-      isValid(user.businessName) && isValid(user.gstNumber) &&
-      isValid(user.houseNo) && isValid(user.pincode);
-
-    if (isProfileComplete) {
-      document.getElementById("verifiedBadge").style.display = "inline-block";
-      document.getElementById("profileRoleStr").innerText = "🏢 Verified Wholesaler";
-    }
+    // Fetch live GST verification status to show verified badge
+    (async () => {
+      try {
+        const gstRes = await fetch(CONFIG.API_BASE_URL + '/api/gst/status', { headers: { Authorization: 'Bearer ' + token } });
+        const gstData = await gstRes.json();
+        if (gstData.success && gstData.gstVerificationStatus === 'verified') {
+          document.getElementById("verifiedBadge").style.display = "inline-block";
+          document.getElementById("profileRoleStr").innerText = "🏢 GST Verified Wholesaler";
+        } else {
+          document.getElementById("verifiedBadge").style.display = "none";
+          document.getElementById("profileRoleStr").innerText = "🏢 Wholesaler";
+        }
+      } catch(e) {
+        document.getElementById("verifiedBadge").style.display = "none";
+      }
+    })();
 
     window.addEventListener('click', function(e) {
       if (!document.getElementById('notifWrapper').contains(e.target)) {
@@ -653,5 +773,322 @@
 
   <!-- AI Chatbot -->
   <script src="/chatbot.js"></script>
+
+  <!-- jsPDF + AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <script>
+    // ── shared helpers ──────────────────────────────────────────
+    const fmtINR = v => '₹' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtPDF  = v => 'Rs. ' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    const prodStatus = p => {
+      if (!p.stock && p.stock === 0) return 'Out of Stock';
+      if (p.stock <= 10) return 'Low Stock';
+      return 'In Stock';
+    };
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.disabled = loading;
+      if (loading) {
+        btn.dataset.orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-circle-notch spin"></i> Generating...';
+      } else {
+        btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+      }
+    }
+
+    function showRptToast(msg, type = 'success') {
+      let c = document.getElementById('toastContainer');
+      if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px;'; document.body.appendChild(c); }
+      const colors = { success: '#2bc155', error: '#ef233c', info: '#4361ee' };
+      const icons  = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+      const t = document.createElement('div');
+      t.style.cssText = `background:white;border-left:4px solid ${colors[type]};padding:12px 16px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:260px;animation:fadeInUp .3s ease;`;
+      t.innerHTML = `<i class="fas ${icons[type]}" style="color:${colors[type]}"></i><span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+    }
+
+    function buildPdfHeader(doc, title, user) {
+      const now = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      // Blue gradient header bar
+      doc.setFillColor(67, 97, 238);
+      doc.rect(0, 0, 210, 38, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('NexTrade', 14, 16);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('B2B Trading Platform', 14, 24);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, 14, 33);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Generated: ${now}`, 210 - 14, 33, { align: 'right' });
+      // User info bar
+      doc.setFillColor(240, 244, 255);
+      doc.rect(0, 38, 210, 12, 'F');
+      doc.setTextColor(67, 97, 238);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${user.name}  •  ${user.businessName || user.email || ''}  •  Wholesaler`, 14, 46);
+      doc.setTextColor(51, 65, 85);
+    }
+
+    function addPdfFooter(doc) {
+      const pages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(220, 220, 220);
+        doc.line(14, 287, 196, 287);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.setFont('helvetica', 'normal');
+        doc.text('NexTrade  •  Confidential Business Report  •  Do not share', 14, 292);
+        doc.text(`Page ${i} of ${pages}`, 196, 292, { align: 'right' });
+      }
+    }
+
+    function buildSummaryBox(doc, items, yStart) {
+      const cols = items.length;
+      const colW = 182 / cols;
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, yStart, 182, 22, 3, 3, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, yStart, 182, 22, 3, 3, 'S');
+      items.forEach((item, i) => {
+        const x = 14 + i * colW + colW / 2;
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(67, 97, 238);
+        doc.text(String(item.value), x, yStart + 9, { align: 'center' });
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184);
+        doc.text(item.label, x, yStart + 16, { align: 'center' });
+      });
+      return yStart + 28;
+    }
+
+    function buildQueryStr(startId, endId) {
+      const s = document.getElementById(startId)?.value;
+      const e = document.getElementById(endId)?.value;
+      const params = new URLSearchParams();
+      if (s) params.set('startDate', s);
+      if (e) params.set('endDate', e);
+      return params.toString() ? '?' + params.toString() : '';
+    }
+
+    // ── Inventory PDF ────────────────────────────────────────────
+    async function generateInventoryPDF() {
+      setLoading('invPdfBtn', true);
+      try {
+        const qs = buildQueryStr('invStartDate', 'invEndDate');
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/reports/wholesaler/inventory' + qs, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        buildPdfHeader(doc, 'Product Inventory Report', user);
+
+        const summaryItems = [
+          { label: 'Total Products', value: data.summary.totalProducts },
+          { label: 'Total Stock', value: data.summary.totalStock.toLocaleString('en-IN') },
+          { label: 'Reserved Stock', value: data.summary.totalReservedStock.toLocaleString('en-IN') }
+        ];
+        let y = buildSummaryBox(doc, summaryItems, 54);
+
+        doc.autoTable({
+          startY: y,
+          margin: { left: 14, right: 14 },
+          head: [['#', 'Product Name', 'Category', 'Price', 'MOQ', 'Stock', 'Reserved', 'Sold', 'Status', 'Date Added']],
+          body: data.products.map((p, i) => [
+            i + 1, p.name, p.category, fmtPDF(p.pricePerUnit),
+            p.moq, p.stock, p.reservedStock || 0, p.soldCount || 0,
+            prodStatus(p), fmtDate(p.createdAt)
+          ]),
+          headStyles: { fillColor: [67, 97, 238], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 8.5, textColor: [51, 65, 85] },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          columnStyles: { 0: { cellWidth: 8 }, 3: { halign: 'right' }, 9: { cellWidth: 24 } },
+          styles: { lineColor: [226, 232, 240], lineWidth: 0.1 }
+        });
+
+        addPdfFooter(doc);
+        doc.save(`NexTrade_Inventory_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+        showRptToast('Inventory PDF downloaded successfully!', 'success');
+      } catch (err) {
+        console.error(err);
+        showRptToast('Failed to generate PDF: ' + err.message, 'error');
+      } finally {
+        setLoading('invPdfBtn', false);
+      }
+    }
+
+    // ── Inventory Excel ──────────────────────────────────────────
+    async function generateInventoryExcel() {
+      setLoading('invXlsBtn', true);
+      try {
+        const qs = buildQueryStr('invStartDate', 'invEndDate');
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/reports/wholesaler/inventory' + qs, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const wb = XLSX.utils.book_new();
+
+        // Summary sheet
+        const summaryRows = [
+          ['NexTrade — Product Inventory Report'],
+          ['Generated', new Date().toLocaleString('en-IN')],
+          ['User', user.name], ['Business', user.businessName || ''],
+          [],
+          ['SUMMARY'],
+          ['Total Products', data.summary.totalProducts],
+          ['Total Stock', data.summary.totalStock],
+          ['Reserved Stock', data.summary.totalReservedStock]
+        ];
+
+        // Data rows
+        const headers = ['#', 'Product Name', 'Category', 'Description', 'Price (₹)', 'MOQ', 'Current Stock', 'Reserved Stock', 'Total Sold', 'Status', 'Date Added'];
+        const rows = data.products.map((p, i) => [
+          i + 1, p.name, p.category, p.description,
+          Number(p.pricePerUnit), p.moq, p.stock, p.reservedStock || 0,
+          p.soldCount || 0, prodStatus(p), fmtDate(p.createdAt)
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([...summaryRows, [], headers, ...rows]);
+
+        // Column widths
+        ws['!cols'] = [6, 28, 18, 40, 14, 8, 14, 14, 10, 14, 18].map(w => ({ wch: w }));
+
+        // Bold header row (row index = summaryRows.length + 2 from 0)
+        const headerRowIdx = summaryRows.length + 1;
+        headers.forEach((_, ci) => {
+          const cellRef = XLSX.utils.encode_cell({ r: headerRowIdx, c: ci });
+          if (!ws[cellRef]) return;
+          ws[cellRef].s = { font: { bold: true }, fill: { fgColor: { rgb: '4361EE' } }, font: { bold: true, color: { rgb: 'FFFFFF' } } };
+        });
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+        XLSX.writeFile(wb, `NexTrade_Inventory_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showRptToast('Inventory Excel downloaded successfully!', 'success');
+      } catch (err) {
+        console.error(err);
+        showRptToast('Failed to generate Excel: ' + err.message, 'error');
+      } finally {
+        setLoading('invXlsBtn', false);
+      }
+    }
+
+    // ── Deals PDF ────────────────────────────────────────────────
+    async function generateDealsPDF() {
+      setLoading('dealPdfBtn', true);
+      try {
+        const qs = buildQueryStr('dealStartDate', 'dealEndDate');
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/reports/wholesaler/deals' + qs, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        buildPdfHeader(doc, 'Deal Report', user);
+
+        const summaryItems = [
+          { label: 'Total Deals', value: data.summary.totalDeals },
+          { label: 'Completed', value: data.summary.completedDeals },
+          { label: 'Pending', value: data.summary.pendingDeals },
+          { label: 'Rejected', value: data.summary.rejectedDeals },
+          { label: 'Est. Revenue', value: fmtPDF(data.summary.totalRevenue) }
+        ];
+        let y = buildSummaryBox(doc, summaryItems, 54);
+
+        const statusMap = { pending: 'Pending', wholesaler_updated: 'Offer Updated', wholesaler_accepted: 'Finalizing', confirmed: 'Confirmed', rejected: 'Rejected' };
+
+        doc.autoTable({
+          startY: y,
+          margin: { left: 14, right: 14 },
+          head: [['#', 'Retailer Name', 'Product', 'Qty', 'Offered Price', 'Final Price', 'Status', 'Deal Date']],
+          body: data.deals.map((d, i) => {
+            const rt = d.retailerId;
+            const rtName = rt ? (rt.businessName || rt.name || '—') : '—';
+            const finalPrice = d.status === 'confirmed' ? fmtPDF(d.offeredPrice) : '—';
+            return [i + 1, rtName, d.productName || '—', d.quantity, fmtPDF(d.offeredPrice), finalPrice, statusMap[d.status] || d.status, fmtDate(d.createdAt)];
+          }),
+          headStyles: { fillColor: [67, 97, 238], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 8.5, textColor: [51, 65, 85] },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          columnStyles: { 0: { cellWidth: 8 }, 4: { halign: 'right' }, 5: { halign: 'right' } },
+          styles: { lineColor: [226, 232, 240], lineWidth: 0.1 }
+        });
+
+        addPdfFooter(doc);
+        doc.save(`NexTrade_Deal_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+        showRptToast('Deal PDF downloaded successfully!', 'success');
+      } catch (err) {
+        console.error(err);
+        showRptToast('Failed to generate PDF: ' + err.message, 'error');
+      } finally {
+        setLoading('dealPdfBtn', false);
+      }
+    }
+
+    // ── Deals Excel ──────────────────────────────────────────────
+    async function generateDealsExcel() {
+      setLoading('dealXlsBtn', true);
+      try {
+        const qs = buildQueryStr('dealStartDate', 'dealEndDate');
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/reports/wholesaler/deals' + qs, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const wb = XLSX.utils.book_new();
+        const statusMap = { pending: 'Pending', wholesaler_updated: 'Offer Updated', wholesaler_accepted: 'Finalizing', confirmed: 'Confirmed', rejected: 'Rejected' };
+
+        const summaryRows = [
+          ['NexTrade — Deal Report'],
+          ['Generated', new Date().toLocaleString('en-IN')],
+          ['User', user.name], ['Business', user.businessName || ''],
+          [],
+          ['SUMMARY'],
+          ['Total Deals', data.summary.totalDeals],
+          ['Completed', data.summary.completedDeals],
+          ['Pending', data.summary.pendingDeals],
+          ['Rejected', data.summary.rejectedDeals],
+          ['Est. Revenue', `₹${Number(data.summary.totalRevenue).toLocaleString('en-IN')}`]
+        ];
+
+        const headers = ['#', 'Retailer Name', 'Contact', 'Product Name', 'Quantity', 'Offered Price (₹)', 'Final Price (₹)', 'Deal Status', 'Deal Date'];
+        const rows = data.deals.map((d, i) => {
+          const rt = d.retailerId;
+          const rtName = rt ? (rt.businessName || rt.name || '—') : '—';
+          const contact = rt ? (rt.mobileNumber || rt.email || '—') : '—';
+          const finalPrice = d.status === 'confirmed' ? Number(d.offeredPrice) : '—';
+          return [i + 1, rtName, contact, d.productName || '—', d.quantity, Number(d.offeredPrice), finalPrice, statusMap[d.status] || d.status, fmtDate(d.createdAt)];
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet([...summaryRows, [], headers, ...rows]);
+        ws['!cols'] = [6, 28, 22, 28, 10, 18, 16, 16, 18].map(w => ({ wch: w }));
+        XLSX.utils.book_append_sheet(wb, ws, 'Deals');
+        XLSX.writeFile(wb, `NexTrade_Deal_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showRptToast('Deal Excel downloaded successfully!', 'success');
+      } catch (err) {
+        console.error(err);
+        showRptToast('Failed to generate Excel: ' + err.message, 'error');
+      } finally {
+        setLoading('dealXlsBtn', false);
+      }
+    }
+  </script>
 </body>
 </html>

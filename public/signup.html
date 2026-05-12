@@ -64,6 +64,27 @@
           class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
       </div>
 
+      <!-- Mobile Number -->
+      <div class="relative flex gap-2">
+        <div class="relative flex-1">
+          <i class="fas fa-phone absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input
+            type="tel" id="mobileNumber" placeholder="Mobile Number (e.g. 9876543210)" required
+            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+        </div>
+        <button type="button" id="sendOtpBtn" class="bg-primary hover:bg-primary-dark text-white px-4 py-3 rounded-xl font-semibold text-sm transition shrink-0 whitespace-nowrap">
+          Send OTP
+        </button>
+      </div>
+
+      <!-- OTP Field -->
+      <div class="relative" id="otpContainer" style="display: none;">
+        <i class="fas fa-key absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text" id="otp" placeholder="Enter 6-digit OTP" maxlength="6"
+          class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition tracking-widest font-bold text-center">
+      </div>
+
       <!-- Password -->
       <div class="relative">
         <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -129,18 +150,53 @@
       }
     });
 
+    // ── SEND OTP LOGIC ──
+    document.getElementById("sendOtpBtn").addEventListener("click", async () => {
+      const mobileNumber = document.getElementById("mobileNumber").value.trim();
+      if (!mobileNumber) return showMsg("Please enter a mobile number first", false);
+      
+      const btn = document.getElementById("sendOtpBtn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        const res = await fetch(CONFIG.API_BASE_URL + "/api/auth/send-signup-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mobileNumber })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showMsg("OTP Sent! Check your phone.", true);
+          document.getElementById("otpContainer").style.display = "block";
+          document.getElementById("otp").required = true;
+          btn.innerHTML = 'Resend';
+        } else {
+          showMsg(data.message, false);
+          btn.innerHTML = 'Send OTP';
+        }
+      } catch (err) {
+        showMsg("Error sending OTP.", false);
+        btn.innerHTML = 'Send OTP';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     // ── FORM SUBMIT (original logic preserved exactly) ──
     document.getElementById("signupForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name      = document.getElementById("name").value;
-      const email     = document.getElementById("email").value;
-      const password  = document.getElementById("password").value;
-      const role      = document.getElementById("role").value;
-      const gstNumber = document.getElementById("gstNumber").value;
+      const name         = document.getElementById("name").value;
+      const email        = document.getElementById("email").value;
+      const password     = document.getElementById("password").value;
+      const role         = document.getElementById("role").value;
+      const gstNumber    = document.getElementById("gstNumber").value;
+      const mobileNumber = document.getElementById("mobileNumber").value;
+      const otp          = document.getElementById("otp").value;
 
-      if (!name || !email || !password || !role) {
-        return showMsg("Fill all fields", false);
+      if (!name || !email || !password || !role || !mobileNumber || !otp) {
+        return showMsg("Fill all required fields, including OTP", false);
       }
 
       if (role === "wholesaler" && !gstNumber) {
@@ -151,7 +207,7 @@
         const res = await fetch(CONFIG.API_BASE_URL + "/api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password, role, gstNumber })
+          body: JSON.stringify({ name, email, password, role, gstNumber, mobileNumber, otp })
         });
 
         const data = await res.json();

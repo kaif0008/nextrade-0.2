@@ -541,6 +541,14 @@
                 showToast(msgs[status] || 'Deal updated', status==='confirmed'?'success':status==='rejected'?'error':'info');
                 openChat(currentUser, document.getElementById('chatTitle').innerText);
                 if (status === 'confirmed' && user.role === 'retailer') setTimeout(function(){ if(document.getElementById("ratingModal").style.display !== "flex") openRatingModal(currentUser, dealId); }, 1200);
+            } else if (data.code === 'GST_NOT_VERIFIED') {
+                // Clear GST-specific error with profile link
+                showToast('⚠️ GST verification required. Please go to Profile → Business Information and submit your GST.', 'error');
+                setTimeout(function() {
+                    if (confirm('Your GST is not verified. Go to Profile to submit your GST number for verification?')) {
+                        location.href = 'profile.html';
+                    }
+                }, 500);
             } else showToast(data.message || 'Action failed', 'error');
         } catch(e) { console.error(e); showToast('Network error', 'error'); }
     }
@@ -578,7 +586,23 @@
             openChat(currentUser, document.getElementById("chatTitle").innerText);
             var msgs = { wholesaler_accepted: 'Wholesaler accepted the deal! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal rejected ❌' };
             showToast(msgs[deal && deal.status] || 'Deal status changed', deal && deal.status==='confirmed'?'success':deal && deal.status==='rejected'?'error':'info');
-            if (deal && deal.status === 'confirmed' && user.role === 'retailer') setTimeout(function(){ if(document.getElementById("ratingModal").style.display !== "flex") openRatingModal(currentUser, deal._id); }, 1200);
+            if (deal && deal.status === 'confirmed') {
+                // Show invoice download hint in chat
+                setTimeout(function() {
+                    const box = document.getElementById('chatBox');
+                    if (box) {
+                        const hint = document.createElement('div');
+                        hint.className = 'msg-bubble-wrap';
+                        hint.style.justifyContent = 'center';
+                        hint.innerHTML = '<div class="system-msg" style="background:rgba(67,97,238,.08);color:#4361ee;border:1px solid rgba(67,97,238,.2);max-width:90%;border-radius:10px;padding:8px 16px;">' +
+                            '🧾 <strong>Invoice available!</strong> You can download the invoice for this deal from <a href="deals-record.html" style="color:#4361ee;text-decoration:underline;font-weight:600;">Deals Record</a> page.' +
+                            '</div>';
+                        box.appendChild(hint);
+                        box.scrollTop = box.scrollHeight;
+                    }
+                }, 800);
+                if (user.role === 'retailer') setTimeout(function(){ if(document.getElementById("ratingModal").style.display !== "flex") openRatingModal(currentUser, deal._id); }, 1800);
+            }
         }
     });
     socket.on("message_status_update", function(data) {

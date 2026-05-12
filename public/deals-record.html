@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/css/global.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -22,44 +23,238 @@
   </script>
   <script src="js/config.js"></script>
   <style>
-    /* Classes used by JS-generated deal card HTML */
-    .deal-card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.05); transition:all .3s; border:1px solid #f1f5f9; }
-    .deal-card:hover { transform:translateY(-3px); box-shadow:0 5px 15px rgba(0,0,0,.08); border-color:#cbd5e1; }
-    .deal-card.clickable { cursor:pointer; }
-    .deal-card.clickable:hover { border-color:#4895ef; box-shadow:0 8px 20px rgba(67,97,238,.15); }
-    .deal-header { padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; background:#fafafa; }
-    .deal-title { font-weight:600; font-size:15px; display:flex; align-items:center; gap:8px; color:#1e293b; }
-    .deal-status { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
-    .status-pending { background:rgba(252,163,17,.1); color:#fca311; }
-    .status-wholesaler_updated { background:rgba(14,165,233,.1); color:#0ea5e9; }
-    .status-confirmed, .status-wholesaler_accepted { background:rgba(43,193,85,.1); color:#2bc155; }
-    .status-rejected { background:rgba(239,35,60,.1); color:#ef233c; }
-    .deal-body { padding:20px; }
-    .deal-product-info { display:flex; gap:15px; margin-bottom:15px; }
-    .deal-image { width:60px; height:60px; border-radius:8px; object-fit:cover; border:1px solid #f1f5f9; }
-    .deal-details { flex:1; }
-    .deal-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; }
-    .deal-metric-label { color:#8d99ae; font-size:11px; text-transform:uppercase; font-weight:600; }
-    .deal-metric-value { font-weight:600; color:#334155; }
-    .deal-metric-value.total { color:#4361ee; font-size:15px; }
-    .deal-counterparty { margin-top:15px; padding-top:15px; border-top:1px dashed #e2e8f0; display:flex; align-items:center; gap:10px; }
-    .cp-icon { width:36px; height:36px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#4361ee; }
-    .cp-info { flex:1; overflow:hidden; }
-    .cp-name { font-weight:600; font-size:13px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .cp-sub { font-size:11px; color:#8d99ae; }
-    .action-banner { background:rgba(67,97,238,.05); padding:8px 15px; margin:-20px -20px 15px -20px; border-bottom:1px solid #f1f5f9; font-size:12px; color:#4361ee; font-weight:500; display:flex; align-items:center; gap:8px; }
-    .empty-state { text-align:center; padding:60px 20px; color:#8d99ae; }
+    /* ── Deal Card Layout ── */
+    .deal-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+      border: 1px solid #f1f5f9;
+      display: flex;
+      flex-direction: column;
+    }
+    .deal-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.09); border-color: #cbd5e1; }
+    .deal-card.clickable { cursor: pointer; }
+    .deal-card.clickable:hover { border-color: #4895ef; box-shadow: 0 8px 24px rgba(67,97,238,.15); }
+
+    /* Header row */
+    .deal-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+      gap: 10px;
+      min-width: 0;
+    }
+    .deal-title {
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #1e293b;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .deal-status {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .status-pending            { background: rgba(252,163,17,.12); color: #d97706; }
+    .status-wholesaler_updated { background: rgba(14,165,233,.12);  color: #0369a1; }
+    .status-confirmed, .status-wholesaler_accepted { background: rgba(43,193,85,.12); color: #16a34a; }
+    .status-rejected           { background: rgba(239,35,60,.12);   color: #dc2626; }
+
+    /* Action banner */
+    .action-banner {
+      background: rgba(67,97,238,.05);
+      padding: 8px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: #4361ee;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Card body */
+    .deal-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+
+    /* Product row: image + name + date */
+    .deal-product-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      min-width: 0;
+    }
+    .deal-image {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .deal-product-meta { flex: 1; min-width: 0; }
+    .deal-product-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .deal-product-date {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    /* Metrics row: 3 equal boxes */
+    .deal-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .deal-metric {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+    .deal-metric-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: .4px;
+      margin-bottom: 4px;
+    }
+    .deal-metric-value {
+      font-weight: 700;
+      font-size: 13px;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deal-metric-value.price  { color: #10b981; }
+    .deal-metric-value.total  { color: #4361ee; font-size: 14px; }
+
+    /* Counterparty row */
+    .deal-counterparty {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: 10px;
+      min-width: 0;
+    }
+    .cp-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #eef2ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4361ee;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .cp-info { flex: 1; min-width: 0; }
+    .cp-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cp-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    /* Action footer */
+    .deal-footer {
+      padding: 14px 18px;
+      border-top: 1px solid #f1f5f9;
+      background: #fafafa;
+    }
+
+    /* Invoice button */
+    .invoice-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 16px;
+      background: linear-gradient(135deg,#4361ee,#4895ef);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .25s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .invoice-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(67,97,238,.4); }
+    .invoice-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Chat CTA (for actionable deals) */
+    .chat-cta-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 16px;
+      background: #f1f5f9;
+      color: #4361ee;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .25s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .chat-cta-btn:hover { background: #eef2ff; border-color: #4361ee; }
+
     /* Filter pills */
-    .filter-btn { padding:8px 16px; background:white; border:1px solid #e2e8f0; border-radius:20px; font-size:13px; font-weight:500; color:#8d99ae; cursor:pointer; transition:all .3s; white-space:nowrap; font-family:'Poppins',sans-serif; }
-    .filter-btn:hover { border-color:#4361ee; color:#4361ee; }
-    .filter-btn.active { background:#4361ee; color:white; border-color:#4361ee; }
-    /* Sidebar nav-link (same pattern) */
-    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; color:#8d99ae; text-decoration:none; font-weight:500; transition:all .3s; border:none; background:none; width:100%; text-align:left; cursor:pointer; font-size:14px; }
-    .nav-link:hover { background:rgba(67,97,238,.05); color:#4361ee; }
-    .nav-link.active { background:#4361ee; color:white; }
-    .nav-link i { width:20px; text-align:center; }
-    .logout-btn { color:#ef233c; margin-top:auto; }
-    .logout-btn:hover { background:rgba(239,35,60,.05); color:#ef233c; }
+    .filter-btn { padding: 8px 18px; background: white; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 13px; font-weight: 500; color: #94a3b8; cursor: pointer; transition: all .25s; white-space: nowrap; font-family: 'Poppins', sans-serif; }
+    .filter-btn:hover { border-color: #4361ee; color: #4361ee; }
+    .filter-btn.active { background: #4361ee; color: white; border-color: #4361ee; }
+
+    /* Sidebar nav */
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; color: #8d99ae; text-decoration: none; font-weight: 500; transition: all .25s; border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 14px; }
+    .nav-link:hover { background: rgba(67,97,238,.05); color: #4361ee; }
+    .nav-link.active { background: #4361ee; color: white; }
+    .nav-link i { width: 20px; text-align: center; }
+    .logout-btn { color: #ef233c; margin-top: auto; }
+    .logout-btn:hover { background: rgba(239,35,60,.05); color: #ef233c; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+
+    /* Responsive: collapse metrics to 2 cols on very narrow */
+    @media (max-width: 340px) {
+      .deal-metrics { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 
@@ -228,37 +423,62 @@
           counterpartyHtml = `<div class="deal-counterparty"><div class="cp-icon"><i class="fas fa-store"></i></div><div class="cp-info"><div class="cp-name">${rt.name || 'Unknown Retailer'}</div><div class="cp-sub">Retailer &bull; ${rt.mobileNumber || 'No contact info'}</div></div></div>`;
         }
 
-        let onClickStr = '';
-        let cardClass = isActionable ? 'deal-card clickable' : 'deal-card';
-        let dealTitleIcon = isActionable ? '<i class="fas fa-handshake" style="color:#4361ee;"></i>' : '<i class="fas fa-handshake" style="color:#cbd5e1;"></i>';
-        let actionBanner = '';
-        if (isActionable) {
-          const counterpartyId = isRetailer ? (deal.wholesalerId?._id || deal.wholesalerId) : (deal.retailerId?._id || deal.retailerId);
-          onClickStr = `onclick="window.location.href='messages.html?user=${counterpartyId}'"`;
-          actionBanner = `<div class="action-banner"><i class="fas fa-comment-dots"></i> Click to open chat and resolve this deal</div>`;
-        }
+        const footerHtml = deal.status === 'confirmed'
+          ? `<div class="deal-footer"><button class="invoice-btn" onclick="event.stopPropagation();generateInvoicePDF('${deal._id}',this)"><i class="fas fa-file-invoice"></i> Download Invoice</button></div>`
+          : isActionable
+          ? `<div class="deal-footer"><button class="chat-cta-btn" onclick="event.stopPropagation();window.location.href='messages.html?user=${isRetailer ? (deal.wholesalerId?._id||deal.wholesalerId) : (deal.retailerId?._id||deal.retailerId)}'"><i class="fas fa-comment-dots"></i> Open Chat to Resolve Deal</button></div>`
+          : '';
 
         const cardHtml = `
-          <div class="${cardClass}" ${onClickStr}>
+          <div class="deal-card${isActionable ? ' clickable' : ''}">
+            <!-- Header -->
             <div class="deal-header">
-              <div class="deal-title">${dealTitleIcon} Deal for ${deal.productName || 'Product'}</div>
+              <div class="deal-title">
+                <i class="fas fa-handshake" style="color:${isActionable?'#4361ee':'#cbd5e1'};"></i>
+                <span>${deal.productName || 'Product'}</span>
+              </div>
               <span class="deal-status ${statClass}">${statLabel}</span>
             </div>
+
+            ${isActionable ? '<div class="action-banner"><i class="fas fa-comment-dots"></i> This deal needs your attention — open chat to respond</div>' : ''}
+
+            <!-- Body -->
             <div class="deal-body">
-              ${actionBanner}
-              <div class="deal-product-info">
-                <img src="${deal.productImage || 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=100&q=70'}" class="deal-image">
-                <div class="deal-details">
-                  <div class="deal-grid">
-                    <div><div class="deal-metric-label">Date Initiated</div><div class="deal-metric-value" style="font-size:12px;">${parseDate(deal.createdAt)}</div></div>
-                    <div><div class="deal-metric-label">Unit Price</div><div class="deal-metric-value" style="color:#10b981;">${formatCurrency(deal.offeredPrice)}</div></div>
-                    <div><div class="deal-metric-label">Quantity</div><div class="deal-metric-value">${deal.quantity} Units</div></div>
-                    <div><div class="deal-metric-label">Total Value</div><div class="deal-metric-value total">${totalVal}</div></div>
-                  </div>
+
+              <!-- Product row -->
+              <div class="deal-product-row">
+                <img
+                  src="${deal.productImage || 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=100&q=70'}"
+                  class="deal-image" alt="Product">
+                <div class="deal-product-meta">
+                  <div class="deal-product-name">${deal.productName || 'Product'}</div>
+                  <div class="deal-product-date"><i class="fas fa-calendar-alt" style="margin-right:4px;"></i>${parseDate(deal.createdAt)}</div>
                 </div>
               </div>
+
+              <!-- Metrics -->
+              <div class="deal-metrics">
+                <div class="deal-metric">
+                  <div class="deal-metric-label">Quantity</div>
+                  <div class="deal-metric-value">${deal.quantity} <span style="font-size:11px;font-weight:500;color:#94a3b8;">units</span></div>
+                </div>
+                <div class="deal-metric">
+                  <div class="deal-metric-label">Unit Price</div>
+                  <div class="deal-metric-value price">${formatCurrency(deal.offeredPrice)}</div>
+                </div>
+                <div class="deal-metric" style="background:#eef2ff;">
+                  <div class="deal-metric-label" style="color:#6366f1;">Total Value</div>
+                  <div class="deal-metric-value total">${totalVal}</div>
+                </div>
+              </div>
+
+              <!-- Counterparty -->
               ${counterpartyHtml}
+
             </div>
+
+            <!-- Footer with button -->
+            ${footerHtml}
           </div>`;
         grid.innerHTML += cardHtml;
       });
@@ -266,6 +486,149 @@
 
     setupDashboardNav();
     fetchDeals();
+
+    // ==================== INVOICE PDF ====================
+    async function generateInvoicePDF(dealId, btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating...';
+      try {
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/invoice/${dealId}`, { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        if (!data.success) { alert(data.message || 'Could not load invoice data'); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc  = new jsPDF({ unit: 'mm', format: 'a4' });
+        const W    = doc.internal.pageSize.getWidth();
+        const inv  = data.invoice;
+        const deal = inv.deal;
+        const ws   = inv.wholesaler  || {};
+        const rt   = inv.retailer    || {};
+
+        const fmtAmt = (v) => 'Rs. ' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '-';
+        const wsAddr = [ws.houseNo, ws.street, ws.city, ws.state, ws.pincode].filter(Boolean).join(', ') || '-';
+        const rtAddr = [rt.houseNo, rt.street, rt.city, rt.state, rt.pincode].filter(Boolean).join(', ') || '-';
+        const total = (deal.offeredPrice || 0) * (deal.quantity || 0);
+
+        // ── Header band ──
+        doc.setFillColor(43, 61, 238);
+        doc.rect(0, 0, W, 32, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22); doc.setFont('helvetica', 'bold');
+        doc.text('NexTrade', 14, 14);
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('B2B Wholesale Trading Platform', 14, 20);
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+        doc.text('TAX INVOICE', W - 14, 12, { align: 'right' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('Invoice No: ' + inv.invoiceNumber, W - 14, 18, { align: 'right' });
+        doc.text('Deal ID:    ' + inv.dealId,         W - 14, 23, { align: 'right' });
+        doc.text('Date:       ' + fmtDate(inv.issuedAt), W - 14, 28, { align: 'right' });
+
+        // ── Party boxes ──
+        let y = 40;
+        doc.setTextColor(30, 30, 30);
+        const boxH = 32;
+        // Wholesaler box
+        doc.setFillColor(248, 250, 252); doc.roundedRect(14, y, (W/2)-20, boxH, 3, 3, 'F');
+        doc.setFillColor(43, 61, 238);   doc.roundedRect(14, y, (W/2)-20, 7, 3, 3, 'F');
+        doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+        doc.text('SELLER (WHOLESALER)', 17, y + 5);
+        doc.setTextColor(30,30,30); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+        doc.text(ws.businessName || ws.name || '-', 17, y + 13);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8);
+        doc.text(ws.name || '-',          17, y + 19);
+        doc.text(ws.email || '-',         17, y + 24);
+        doc.text(ws.mobileNumber || '-',  17, y + 29);
+        doc.text(wsAddr.substring(0,38),  17, y + 34, { maxWidth: (W/2)-24 });
+
+        // Retailer box
+        const rx = W/2 + 6;
+        doc.setFillColor(248, 250, 252); doc.roundedRect(rx, y, (W/2)-20, boxH, 3, 3, 'F');
+        doc.setFillColor(43, 193, 85);   doc.roundedRect(rx, y, (W/2)-20, 7, 3, 3, 'F');
+        doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+        doc.text('BUYER (RETAILER)', rx + 3, y + 5);
+        doc.setTextColor(30,30,30); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+        doc.text(rt.businessName || rt.name || '-', rx + 3, y + 13);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8);
+        doc.text(rt.name || '-',         rx + 3, y + 19);
+        doc.text(rt.email || '-',        rx + 3, y + 24);
+        doc.text(rt.mobileNumber || '-', rx + 3, y + 29);
+        doc.text(rtAddr.substring(0,38), rx + 3, y + 34, { maxWidth: (W/2)-24 });
+
+        y += boxH + 12;
+
+        // ── Product table header ──
+        doc.setFillColor(43, 61, 238);
+        doc.rect(14, y, W - 28, 8, 'F');
+        doc.setTextColor(255,255,255); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+        doc.text('#',   16, y + 5.5);
+        doc.text('Product / Description', 24, y + 5.5);
+        doc.text('Qty',    W - 80, y + 5.5, { align:'right' });
+        doc.text('Unit Price', W - 55, y + 5.5, { align:'right' });
+        doc.text('Amount',     W - 15, y + 5.5, { align:'right' });
+
+        // Product row
+        y += 8;
+        doc.setFillColor(248,250,252); doc.rect(14, y, W-28, 10, 'F');
+        doc.setTextColor(30,30,30); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+        doc.text('1',                   16, y + 6.5);
+        doc.text((deal.productName || 'Product').substring(0, 40), 24, y + 6.5);
+        doc.text(String(deal.quantity || 0), W - 80, y + 6.5, { align:'right' });
+        doc.text(fmtAmt(deal.offeredPrice) + ' (GST Incl.)', W - 55, y + 6.5, { align:'right' });
+        doc.text(fmtAmt(total),              W - 15, y + 6.5, { align:'right' });
+        y += 10;
+        doc.setDrawColor(225,225,225); doc.line(14, y, W-14, y);
+
+        // ── Summary ──
+        y += 8;
+        const summaryX = W - 85;
+        const addRow = (label, val, bold) => {
+          if (bold) { doc.setFont('helvetica','bold'); doc.setFontSize(10); }
+          else      { doc.setFont('helvetica','normal'); doc.setFontSize(9); }
+          doc.setTextColor(80,80,80);
+          doc.text(label, summaryX, y);
+          doc.setTextColor(30,30,30);
+          doc.text(val, W - 14, y, { align:'right' });
+          y += 7;
+        };
+        addRow('Amount (GST Inclusive)', fmtAmt(total));
+        doc.setDrawColor(43,61,238); doc.line(summaryX, y - 2, W-14, y - 2);
+        addRow('TOTAL',                  fmtAmt(total), true);
+        // Note below total
+        doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(120,120,120);
+        doc.text('* Price is GST inclusive. No additional tax charged.', summaryX, y);
+        y += 5;
+
+        // ── Deal info box ──
+        y += 4;
+        doc.setFillColor(240,244,255); doc.roundedRect(14, y, W-28, 22, 3, 3, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(43,61,238);
+        doc.text('Deal Information', 18, y + 7);
+        doc.setFont('helvetica','normal'); doc.setTextColor(60,60,60); doc.setFontSize(8);
+        doc.text('Invoice Number: ' + inv.invoiceNumber, 18, y + 13);
+        doc.text('Deal ID: '        + inv.dealId,        18, y + 18);
+        doc.text('Deal Date: '      + fmtDate(deal.createdAt), W/2, y + 13);
+        doc.text('Status: Confirmed / Completed',         W/2, y + 18);
+
+        // ── Footer ──
+        const pageH = doc.internal.pageSize.getHeight();
+        doc.setFillColor(43, 61, 238);
+        doc.rect(0, pageH - 18, W, 18, 'F');
+        doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
+        doc.text('Thank you for trading on NexTrade!', W/2, pageH - 10, { align:'center' });
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+        doc.text('NexTrade B2B Platform  |  This is a computer-generated invoice', W/2, pageH - 5, { align:'center' });
+
+        doc.save('NexTrade_Invoice_' + inv.invoiceNumber + '.pdf');
+      } catch (e) {
+        console.error('Invoice error:', e);
+        alert('Failed to generate invoice. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-invoice"></i> Download Invoice';
+      }
+    }
   </script>
 </body>
 </html>

@@ -432,6 +432,39 @@
         .toast.success { border-left: 4px solid var(--success); }
         .toast.error { border-left: 4px solid var(--danger); }
 
+        /* GST status badges */
+        .badge.gst-pending  { background:rgba(243,156,18,.12); color:#d97706; }
+        .badge.gst-verified { background:rgba(46,204,113,.12); color:#16a34a; }
+        .badge.gst-rejected { background:rgba(231,76,60,.12); color:#e74c3c; }
+        .badge.gst-not_submitted { background:#f1f5f9; color:#64748b; }
+
+        /* GST tab filter */
+        .gst-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+        .gst-tab { padding:7px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:white; color:#64748b; transition:all .25s; }
+        .gst-tab.active { background:var(--primary); color:white; border-color:var(--primary); }
+        .gst-tab .cnt { background:rgba(255,255,255,.25); padding:1px 7px; border-radius:20px; font-size:11px; margin-left:4px; }
+        .gst-tab:not(.active) .cnt { background:rgba(67,97,238,.1); color:var(--primary); }
+
+        /* Reject modal */
+        #rejectModalBg { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center; }
+        #rejectModal { background:white;border-radius:16px;padding:28px 32px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.2); }
+        #rejectModal h3 { font-size:17px;font-weight:700;color:#181c32;margin-bottom:6px; }
+        #rejectModal p { font-size:13px;color:#a1a5b7;margin-bottom:16px; }
+        #rejectReasonInput { width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;min-height:90px;outline:none;transition:.2s; }
+        #rejectReasonInput:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.1); }
+        .reject-modal-btns { display:flex;gap:10px;margin-top:16px;justify-content:flex-end; }
+        .btn-cancel-modal { padding:9px 20px;border:1px solid #e2e8f0;border-radius:8px;background:white;cursor:pointer;font-weight:600;font-size:13px; }
+        .btn-reject-confirm { padding:9px 20px;background:#e74c3c;color:white;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;transition:.2s; }
+        .btn-reject-confirm:hover { background:#c0392b; }
+
+        /* GST action buttons */
+        .btn-approve { background:rgba(46,204,113,.15);color:#16a34a;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s; }
+        .btn-approve:hover { background:#2ecc71;color:white; }
+        .btn-reject-gst { background:rgba(231,76,60,.12);color:#e74c3c;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;margin-left:6px; }
+        .btn-reject-gst:hover { background:#e74c3c;color:white; }
+        .btn-portal { background:rgba(67,97,238,.1);color:var(--primary);border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;margin-left:6px;text-decoration:none;display:inline-block; }
+        .btn-portal:hover { background:var(--primary);color:white; }
+
     </style>
 </head>
 <body>
@@ -459,6 +492,10 @@
             </a>
             <a class="nav-item" data-target="reviews">
                 <i class="fas fa-star"></i> Reviews
+            </a>
+            <a class="nav-item" data-target="gst">
+                <i class="fas fa-certificate"></i> GST Verifications
+                <span id="gstPendingCount" style="background:#f39c12;color:white;font-size:11px;padding:1px 7px;border-radius:20px;margin-left:auto;font-weight:700;display:none;">0</span>
             </a>
         </div>
         <button class="logout-btn" onclick="logout()">
@@ -645,7 +682,55 @@
             </div>
         </section>
 
+        <!-- GST Verifications Section -->
+        <section id="gst" class="section-container">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 style="font-size:18px;color:#181c32;">GST Verification Requests</h3>
+                    <a href="https://services.gst.gov.in/services/searchtp" target="_blank" class="btn-portal" style="text-decoration:none;">
+                        <i class="fas fa-external-link-alt"></i> Open GST Portal
+                    </a>
+                </div>
+                <!-- Filter tabs -->
+                <div class="gst-tabs">
+                    <button class="gst-tab active" data-gst="all" onclick="switchGSTTab(this,'all')">All <span class="cnt" id="cntAll">0</span></button>
+                    <button class="gst-tab" data-gst="pending" onclick="switchGSTTab(this,'pending')">⏳ Pending <span class="cnt" id="cntPending">0</span></button>
+                    <button class="gst-tab" data-gst="verified" onclick="switchGSTTab(this,'verified')">✅ Verified <span class="cnt" id="cntVerified">0</span></button>
+                    <button class="gst-tab" data-gst="rejected" onclick="switchGSTTab(this,'rejected')">❌ Rejected <span class="cnt" id="cntRejected">0</span></button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Business Name</th>
+                                <th>Role</th>
+                                <th>GST Number</th>
+                                <th>Status</th>
+                                <th>Submitted Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gstTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
     </main>
+
+    <!-- Reject Reason Modal -->
+    <div id="rejectModalBg" style="display:none;" onclick="if(event.target===this)closeRejectModal()">
+        <div id="rejectModal">
+            <h3><i class="fas fa-times-circle" style="color:#e74c3c;margin-right:8px;"></i>Reject GST Verification</h3>
+            <p>Provide a clear reason so the user can resubmit correctly.</p>
+            <textarea id="rejectReasonInput" placeholder="e.g. GST number does not match registered business name..."></textarea>
+            <div class="reject-modal-btns">
+                <button class="btn-cancel-modal" onclick="closeRejectModal()">Cancel</button>
+                <button class="btn-reject-confirm" onclick="confirmReject()">Confirm Rejection</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast">
@@ -685,7 +770,8 @@
             'products': 'Product Management',
             'deals': 'Deal Monitoring',
             'requirements': 'Requirement Control',
-            'reviews': 'Review Moderation'
+            'reviews': 'Review Moderation',
+            'gst': 'GST Verification Management'
         };
 
         navItems.forEach(item => {
@@ -705,6 +791,7 @@
                 else if(targetId === 'deals') loadDeals();
                 else if(targetId === 'requirements') loadRequirements();
                 else if(targetId === 'reviews') loadReviews();
+                else if(targetId === 'gst') loadGSTVerifications();
             });
         });
 
@@ -944,6 +1031,135 @@
 
         // Initialize Admin Dashboard
         loadAnalytics();
+
+        // Pre-load GST pending count for badge
+        async function loadGSTPendingBadge() {
+            try {
+                const res = await fetch(`${CONFIG.API_BASE_URL}/api/admin/gst-verifications?status=all`, { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success && data.summary.pending > 0) {
+                    const badge = document.getElementById('gstPendingCount');
+                    if (badge) { badge.textContent = data.summary.pending; badge.style.display = 'inline-block'; }
+                }
+            } catch(e) {}
+        }
+        loadGSTPendingBadge();
+
+        // ── GST VERIFICATIONS ──────────────────────────────────────
+        let gstActiveFilter = 'all';
+        let gstPendingRejectId = null;
+
+        function switchGSTTab(el, filter) {
+            document.querySelectorAll('.gst-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            gstActiveFilter = filter;
+            loadGSTVerifications(filter);
+        }
+
+        async function loadGSTVerifications(filter) {
+            filter = filter || gstActiveFilter;
+            const tbody = document.getElementById('gstTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="loader-container"><div class="spinner"></div></td></tr>';
+            try {
+                const qs = filter && filter !== 'all' ? `?status=${filter}` : '?status=all';
+                const res = await fetch(`${CONFIG.API_BASE_URL}/api/admin/gst-verifications${qs}`, { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    renderGSTTable(data.users);
+                    // Update tab counts
+                    const s = data.summary;
+                    const total = (s.pending || 0) + (s.verified || 0) + (s.rejected || 0);
+                    document.getElementById('cntAll').textContent = total;
+                    document.getElementById('cntPending').textContent  = s.pending  || 0;
+                    document.getElementById('cntVerified').textContent = s.verified || 0;
+                    document.getElementById('cntRejected').textContent = s.rejected || 0;
+                    // Update sidebar pending badge
+                    const sideBadge = document.getElementById('gstPendingCount');
+                    if (sideBadge) { sideBadge.textContent = s.pending || 0; sideBadge.style.display = s.pending > 0 ? 'inline-block' : 'none'; }
+                }
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Failed to load GST data</td></tr>';
+            }
+        }
+
+        function renderGSTTable(users) {
+            const tbody = document.getElementById('gstTableBody');
+            tbody.innerHTML = '';
+            if (!users.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#a1a5b7;">No GST verification requests found.</td></tr>';
+                return;
+            }
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                const date = u.gstSubmittedAt ? new Date(u.gstSubmittedAt).toLocaleDateString('en-IN') : '—';
+                const statusLabel = { pending:'⏳ Pending', verified:'✅ Verified', rejected:'❌ Rejected', not_submitted:'— Not Submitted' };
+                const statusClass = { pending:'gst-pending', verified:'gst-verified', rejected:'gst-rejected', not_submitted:'gst-not_submitted' };
+                const st = u.gstVerificationStatus || 'not_submitted';
+
+                let actions = `<a href="https://services.gst.gov.in/services/searchtp" target="_blank" class="btn-portal" title="Search GST"><i class="fas fa-external-link-alt"></i></a>`;
+                if (st !== 'verified') actions = `<button class="btn-approve" onclick="approveGST('${u._id}')"><i class="fas fa-check"></i> Approve</button>` + actions;
+                if (st !== 'rejected')  actions += `<button class="btn-reject-gst" onclick="openRejectModal('${u._id}')"><i class="fas fa-times"></i> Reject</button>`;
+
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight:600;color:#181c32;">${u.name}</div>
+                        <div style="font-size:12px;color:#a1a5b7;">${u.email}</div>
+                    </td>
+                    <td>${u.businessName || '—'}</td>
+                    <td><span class="badge ${u.role}">${u.role}</span></td>
+                    <td style="font-family:monospace;font-weight:600;color:#181c32;letter-spacing:.5px;">${u.gstNumber || '—'}</td>
+                    <td>
+                        <span class="badge ${statusClass[st]}">${statusLabel[st] || st}</span>
+                        ${st === 'rejected' && u.gstRejectionReason ? `<div style="font-size:11px;color:#e74c3c;margin-top:4px;">${u.gstRejectionReason}</div>` : ''}
+                    </td>
+                    <td>${date}</td>
+                    <td>${actions}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function approveGST(userId) {
+            if (!confirm('Approve GST verification for this user?')) return;
+            try {
+                const res = await fetch(`${CONFIG.API_BASE_URL}/api/admin/gst-verifications/${userId}/approve`, {
+                    method: 'POST', headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                if (data.success) { showToast(data.message, 'success'); loadGSTVerifications(); }
+                else showToast(data.message || 'Failed', 'error');
+            } catch(e) { showToast('Network error', 'error'); }
+        }
+
+        function openRejectModal(userId) {
+            gstPendingRejectId = userId;
+            document.getElementById('rejectReasonInput').value = '';
+            document.getElementById('rejectModalBg').style.display = 'flex';
+            document.getElementById('rejectReasonInput').focus();
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModalBg').style.display = 'none';
+            gstPendingRejectId = null;
+        }
+
+        async function confirmReject() {
+            const reason = document.getElementById('rejectReasonInput').value.trim();
+            if (!reason) { alert('Please enter a rejection reason.'); return; }
+            if (!gstPendingRejectId) return;
+            try {
+                const res = await fetch(`${CONFIG.API_BASE_URL}/api/admin/gst-verifications/${gstPendingRejectId}/reject`, {
+                    method: 'POST', headers: getAuthHeaders(),
+                    body: JSON.stringify({ reason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    closeRejectModal();
+                    loadGSTVerifications();
+                } else showToast(data.message || 'Rejection failed', 'error');
+            } catch(e) { showToast('Network error', 'error'); }
+        }
 
         // Search Handlers (Client-Side)
         document.getElementById('searchUsers').addEventListener('input', (e) => {

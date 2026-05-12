@@ -131,6 +131,22 @@
       .form-grid{grid-template-columns:1fr;}
       .avatar-section{flex-direction:column;text-align:center;}
     }
+
+    /* GST Verification Widget */
+    .gst-widget { grid-column:1/-1; }
+    .gst-status-bar { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:10px; font-size:13px; font-weight:600; margin-bottom:12px; }
+    .gst-status-bar.not_submitted { background:#f1f5f9; color:#64748b; }
+    .gst-status-bar.pending { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
+    .gst-status-bar.verified { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+    .gst-status-bar.rejected { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+    .gst-status-icon { font-size:16px; }
+    .gst-reject-reason { margin-top:6px; font-size:12px; font-weight:500; color:#7f1d1d; background:#fee2e2; border-radius:8px; padding:8px 12px; }
+    .gst-submit-btn { margin-top:10px; padding:10px 22px; background:linear-gradient(135deg,#4361ee,#4895ef); color:white; border:none; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer; transition:all .3s; font-family:'Poppins',sans-serif; display:inline-flex; align-items:center; gap:8px; }
+    .gst-submit-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(67,97,238,.35); }
+    .gst-submit-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .gst-portal-link { font-size:12px; color:var(--primary); text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:5px; margin-top:8px; }
+    .gst-portal-link:hover { text-decoration:underline; }
+    .gst-verified-badge { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg,#16a34a,#22c55e); color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; margin-left:10px; }
   </style>
 </head>
 
@@ -314,14 +330,35 @@
               </select>
               <input type="text" class="form-control" id="business_industry" data-field="industry" placeholder="Enter custom category" style="display:none;margin-top:8px;" disabled>
             </div>
-            <div class="form-group col-span-full">
+            <div class="form-group gst-widget">
               <label class="form-label">
-                <div>GSTIN Number</div>
+                <div>GSTIN Number <span id="gstVerifiedInlineLabel"></span></div>
                 <span class="missing-badge" id="badge_gstNumber"><i class="fas fa-exclamation-circle"></i> Missing</span>
               </label>
-              <div class="action-group">
-                <input type="text" class="form-control" id="business_gstNumber" data-field="gstNumber" placeholder="Enter 15 digit GSTIN" disabled>
+
+              <!-- Status Bar -->
+              <div class="gst-status-bar not_submitted" id="gstStatusBar">
+                <span class="gst-status-icon">❌</span>
+                <span id="gstStatusText">Not Submitted</span>
               </div>
+
+              <!-- Rejection Reason -->
+              <div class="gst-reject-reason" id="gstRejectReason" style="display:none;"></div>
+
+              <!-- Input + Submit -->
+              <div class="action-group" id="gstInputGroup">
+                <input type="text" class="form-control" id="business_gstNumber" data-field="gstNumber"
+                       placeholder="Enter 15-digit GSTIN (e.g. 22ABCDE1234F1Z5)" maxlength="15"
+                       oninput="this.value=this.value.toUpperCase()" disabled>
+                <button class="gst-submit-btn" id="gstSubmitBtn" onclick="submitGST()" style="display:none;">
+                  <i class="fas fa-paper-plane"></i> Submit for Verification
+                </button>
+              </div>
+
+              <!-- GST Portal Link -->
+              <a href="https://services.gst.gov.in/services/searchtp" target="_blank" class="gst-portal-link" id="gstPortalLink" style="display:none;">
+                <i class="fas fa-external-link-alt"></i> Verify on GST Portal
+              </a>
             </div>
             <div class="form-group">
               <label class="form-label">Year of Establishment</label>
@@ -506,6 +543,10 @@
         document.getElementById("displayProfileName").innerText = userData.name || "User";
         document.getElementById("displayProfileRole").innerText = (userData.role || "User").toUpperCase();
 
+        // GST verified inline badge
+        const gvLabel = document.getElementById('gstVerifiedInlineLabel');
+        if (gvLabel) gvLabel.innerHTML = '';
+
         if (userData.industry) {
             const select  = document.getElementById("business_industry_select");
             const input   = document.getElementById("business_industry");
@@ -529,6 +570,19 @@
         card.querySelectorAll(".form-control").forEach(input => { if (input.dataset.field !== "email") input.disabled = false; });
         card.querySelector(".edit-btn").style.display = "none";
         card.querySelector(".save-btn").style.display = "inline-flex";
+
+        // GST widget: manage input & submit button based on current GST status
+        if (cardId === 'cardBusiness') {
+            const submitBtn = document.getElementById('gstSubmitBtn');
+            const gstInput  = document.getElementById('business_gstNumber');
+            if (gstCurrentStatus === 'not_submitted' || gstCurrentStatus === 'rejected') {
+                if (gstInput)  gstInput.disabled = false;
+                if (submitBtn) submitBtn.style.display = 'inline-flex';
+            } else {
+                if (gstInput)  gstInput.disabled = true;
+                if (submitBtn) submitBtn.style.display = 'none';
+            }
+        }
     }
 
     // ================= SAVE =================
@@ -673,12 +727,11 @@
         document.getElementById("progressBar").style.width  = percent + "%";
         document.getElementById("progressText").innerText   = `${completedSections}/3 Sections Complete`;
         let isStrictlyComplete = false;
-        if (userData.role === 'wholesaler') {
-            const requiredFields = ['name','dob','mobileNumber','gender','businessName','businessType','industry','gstNumber','yearOfEstablishment','businessDescription','houseNo','street','pincode','city','state'];
-            isStrictlyComplete = requiredFields.every(field => isFilled(userData[field])) && isFilled(userData.businessPhotos) && userData.emailVerified === true;
-        }
+        // Note: profileVerifiedBadge is now controlled by renderGSTWidget (GST status)
+        // We keep this variable for backward compat but don't update the badge here.
         const badge = document.getElementById("profileVerifiedBadge");
-        if (badge) badge.style.display = (isStrictlyComplete && userData.role === 'wholesaler') ? "inline-block" : "none";
+        // badge is managed by GST widget now
+
         toggleBadge('badge_mobileNumber', userData.mobileNumber);
         toggleBadge('badge_businessName', userData.businessName);
         toggleBadge('badge_gstNumber',    userData.gstNumber);
@@ -774,6 +827,107 @@
         while(n--) u8arr[n] = bstr.charCodeAt(n);
         return new Blob([u8arr], {type:mime});
     }
+    // ================= GST VERIFICATION =================
+    let gstCurrentStatus = 'not_submitted';
+
+    async function fetchGSTStatus() {
+      try {
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/gst/status`, { headers: { Authorization: 'Bearer ' + authToken } });
+        const data = await res.json();
+        if (data.success) renderGSTWidget(data);
+      } catch (e) { console.error('GST status fetch failed', e); }
+    }
+
+    function renderGSTWidget(data) {
+      gstCurrentStatus = data.gstVerificationStatus || 'not_submitted';
+      const bar       = document.getElementById('gstStatusBar');
+      const statusTxt = document.getElementById('gstStatusText');
+      const rejectDiv = document.getElementById('gstRejectReason');
+      const submitBtn = document.getElementById('gstSubmitBtn');
+      const gstInput  = document.getElementById('business_gstNumber');
+      const portalLink = document.getElementById('gstPortalLink');
+      const inlineLabel = document.getElementById('gstVerifiedInlineLabel');
+
+      // Reset classes
+      bar.className = 'gst-status-bar ' + gstCurrentStatus;
+      rejectDiv.style.display = 'none';
+      if (submitBtn) submitBtn.style.display = 'none';
+      if (portalLink) portalLink.style.display = 'none';
+      if (inlineLabel) inlineLabel.innerHTML = '';
+
+      if (data.gstNumber && gstInput) gstInput.value = data.gstNumber;
+
+      const statusConfig = {
+        not_submitted: { icon: '❌', text: 'Not Submitted — Please submit your GST number for verification' },
+        pending:       { icon: '⏳', text: 'Pending Verification — Admin will review shortly' },
+        verified:      { icon: '✅', text: 'GST Verified' },
+        rejected:      { icon: '❌', text: 'Verification Rejected — Please correct your GST and resubmit' }
+      };
+
+      const cfg = statusConfig[gstCurrentStatus] || statusConfig.not_submitted;
+      bar.querySelector('.gst-status-icon').textContent = cfg.icon;
+      statusTxt.textContent = cfg.text;
+
+      if (gstCurrentStatus === 'rejected') {
+        rejectDiv.style.display = 'block';
+        rejectDiv.innerHTML = `<i class="fas fa-info-circle"></i> Reason: ${data.gstRejectionReason || 'Not specified'}`;
+        if (submitBtn) submitBtn.style.display = 'inline-flex';
+      }
+
+      if (gstCurrentStatus === 'not_submitted' || gstCurrentStatus === 'rejected') {
+        // Enable input when card is in edit mode; handled via toggleEdit
+      }
+
+      if (gstCurrentStatus === 'verified') {
+        if (gstInput) gstInput.disabled = true; // always locked when verified
+        if (inlineLabel) inlineLabel.innerHTML = '<span class="gst-verified-badge"><i class="fas fa-check-circle"></i> GST Verified</span>';
+        if (portalLink) portalLink.style.display = 'inline-flex';
+      }
+
+      // Update profile badge
+      const badge = document.getElementById('profileVerifiedBadge');
+      if (badge) {
+        badge.style.display = gstCurrentStatus === 'verified' ? 'inline-block' : 'none';
+        badge.title = 'GST Verified';
+      }
+    }
+
+    // (GST edit logic is merged into toggleEdit above)
+
+    async function submitGST() {
+      const gstInput = document.getElementById('business_gstNumber');
+      const btn      = document.getElementById('gstSubmitBtn');
+      const gst      = gstInput ? gstInput.value.trim().toUpperCase() : '';
+
+      if (!gst) { showToast('Please enter your GSTIN number', 'error'); return; }
+      const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!GST_RE.test(gst)) { showToast('Invalid GSTIN format. Must be 15 chars (e.g. 22ABCDE1234F1Z5)', 'error'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
+      try {
+        const res  = await fetch(`${CONFIG.API_BASE_URL}/api/gst/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken },
+          body: JSON.stringify({ gstNumber: gst })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('GST submitted! Awaiting admin verification.', 'success');
+          await fetchGSTStatus();
+        } else {
+          showToast(data.message || 'Submission failed', 'error');
+        }
+      } catch (err) {
+        showToast('Network error. Please try again.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Verification';
+      }
+    }
+
+    // Load GST status on page init
+    window.addEventListener('load', () => { if (authToken) fetchGSTStatus(); }, { once: false });
   </script>
   <link rel="stylesheet" href="/css/chatbot.css">
   <script src="/chatbot.js"></script>

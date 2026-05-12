@@ -33,6 +33,35 @@
     .chat-name { font-size:14px; font-weight:600; display:flex; justify-content:space-between; margin-bottom:3px; }
     .chat-time { font-size:11px; color:#8d99ae; }
     .chat-msg { font-size:13px; color:#8d99ae; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    /* ── Report Modal ── */
+    #reportModalBg { position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px; }
+    #reportModal { background:#fff;border-radius:24px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.2); }
+    .rpt-header { background:linear-gradient(135deg,#4361ee,#4895ef);padding:28px 32px;border-radius:24px 24px 0 0;display:flex;align-items:center;justify-content:space-between; }
+    .rpt-header h2 { color:#fff;font-size:20px;font-weight:700;margin:0; }
+    .rpt-header p { color:rgba(255,255,255,.8);font-size:13px;margin:4px 0 0; }
+    .rpt-close { width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s; }
+    .rpt-close:hover { background:rgba(255,255,255,.35); }
+    .rpt-body { padding:28px 32px; }
+    .rpt-card { border:1px solid #e2e8f0;border-radius:16px;overflow:hidden; }
+    .rpt-card-header { background:#f8fafc;padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e2e8f0; }
+    .rpt-card-icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+    .rpt-card-title { font-weight:700;font-size:15px;color:#0f172a; }
+    .rpt-card-sub { font-size:12px;color:#94a3b8;margin-top:2px; }
+    .rpt-card-body { padding:20px; }
+    .rpt-filters { display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+    .rpt-field { display:flex;flex-direction:column;flex:1;min-width:140px; }
+    .rpt-field label { font-size:11px;color:#94a3b8;display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px; }
+    .rpt-input { flex:1;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:'Poppins',sans-serif;color:#334155;outline:none;transition:.2s; }
+    .rpt-input:focus { border-color:#4361ee;box-shadow:0 0 0 3px rgba(67,97,238,.1); }
+    .rpt-btns { display:flex;gap:10px;flex-wrap:wrap; }
+    .rpt-btn { display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Poppins',sans-serif; }
+    .rpt-btn-pdf { background:linear-gradient(135deg,#ef233c,#e5173f);color:#fff; }
+    .rpt-btn-pdf:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(239,35,60,.35); }
+    .rpt-btn-excel { background:linear-gradient(135deg,#2bc155,#23a847);color:#fff; }
+    .rpt-btn-excel:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(43,193,85,.35); }
+    .rpt-btn:disabled { opacity:.65;cursor:not-allowed;transform:none !important;box-shadow:none !important; }
+    .rpt-btn .spin { animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
   </style>
 </head>
 
@@ -110,6 +139,12 @@
           <p class="text-sm text-gray-400">Here's what's happening with your business today.</p>
         </div>
       </div>
+      <!-- Get Report Button -->
+      <button onclick="document.getElementById('reportModalBg').style.display='flex'"
+              class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary-dark transition shadow-sm">
+        <i class="fas fa-file-alt"></i>
+        <span class="hidden sm:inline">Get Report</span>
+      </button>
       <div onclick="go('profile')"
            class="flex items-center gap-2.5 bg-white px-3 py-2 rounded-full shadow-sm cursor-pointer hover:shadow-md transition">
         <div class="text-right hidden sm:block">
@@ -328,6 +363,20 @@
     document.getElementById("topAvatar").innerText = initial;
     document.getElementById("mainAvatar").innerText = initial;
 
+    // Retailer GST badge check
+    (async () => {
+      try {
+        const gstRes = await fetch(CONFIG.API_BASE_URL + '/api/gst/status', { headers: { Authorization: 'Bearer ' + token } });
+        const gstData = await gstRes.json();
+        if (gstData.success && gstData.gstVerificationStatus === 'verified') {
+          const roleLabel = document.querySelector('#topName + div') || document.querySelector('[class*="text-primary"][class*="font-medium"]');
+          // Add verified badge to topbar role text
+          const roleEl = document.querySelector('.text-xs.text-primary.font-medium.mt-0\\.5');
+          if (roleEl) roleEl.innerHTML = 'Retailer <span style="background:#16a34a;color:white;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;margin-left:3px;">✓ GST</span>';
+        }
+      } catch(e) {}
+    })();
+
     async function loadData() {
       try {
         const wRes = await fetch(CONFIG.API_BASE_URL + '/api/user/wholesalers');
@@ -464,7 +513,234 @@
     });
   </script>
 
+  <!-- ══════════ REPORT MODAL ══════════ -->
+  <div id="reportModalBg" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+    <div id="reportModal">
+      <div class="rpt-header">
+        <div>
+          <h2><i class="fas fa-chart-bar" style="margin-right:10px;"></i>Business Reports</h2>
+          <p>Export your deal history as PDF or Excel</p>
+        </div>
+        <button class="rpt-close" onclick="document.getElementById('reportModalBg').style.display='none'">&#x2715;</button>
+      </div>
+      <div class="rpt-body">
+        <div class="rpt-card">
+          <div class="rpt-card-header">
+            <div class="rpt-card-icon" style="background:#dbeafe;color:#2563eb;"><i class="fas fa-handshake"></i></div>
+            <div>
+              <div class="rpt-card-title">Deal History Report</div>
+              <div class="rpt-card-sub">All your deals with wholesalers — status, pricing and contact info</div>
+            </div>
+          </div>
+          <div class="rpt-card-body">
+            <div class="rpt-filters">
+              <div class="rpt-field">
+                <label>Start Date</label>
+                <input type="date" id="rtlStartDate" class="rpt-input">
+              </div>
+              <div class="rpt-field">
+                <label>End Date</label>
+                <input type="date" id="rtlEndDate" class="rpt-input">
+              </div>
+            </div>
+            <div class="rpt-btns">
+              <button id="rtlPdfBtn" class="rpt-btn rpt-btn-pdf" onclick="generateRetailerDealsPDF()">
+                <i class="fas fa-file-pdf"></i> Download PDF
+              </button>
+              <button id="rtlXlsBtn" class="rpt-btn rpt-btn-excel" onclick="generateRetailerDealsExcel()">
+                <i class="fas fa-file-excel"></i> Download Excel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- AI Chatbot -->
   <script src="/chatbot.js"></script>
+
+  <!-- jsPDF + AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <script>
+    const fmtINR  = v => '₹' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtPDF  = v => 'Rs. ' + Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    const statusMap = { pending: 'Pending', wholesaler_updated: 'Offer Updated', wholesaler_accepted: 'Finalizing', confirmed: 'Confirmed', rejected: 'Rejected' };
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.disabled = loading;
+      if (loading) { btn.dataset.orig = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch spin"></i> Generating...'; }
+      else { btn.innerHTML = btn.dataset.orig || btn.innerHTML; }
+    }
+
+    function showRptToast(msg, type = 'success') {
+      let c = document.getElementById('toastContainer');
+      if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px;'; document.body.appendChild(c); }
+      const colors = { success: '#2bc155', error: '#ef233c', info: '#4361ee' };
+      const icons  = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+      const t = document.createElement('div');
+      t.style.cssText = `background:white;border-left:4px solid ${colors[type]};padding:12px 16px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:260px;`;
+      t.innerHTML = `<i class="fas ${icons[type]}" style="color:${colors[type]}"></i><span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+    }
+
+    function buildQueryStr(startId, endId) {
+      const s = document.getElementById(startId)?.value;
+      const e = document.getElementById(endId)?.value;
+      const p = new URLSearchParams();
+      if (s) p.set('startDate', s);
+      if (e) p.set('endDate', e);
+      return p.toString() ? '?' + p.toString() : '';
+    }
+
+    function buildPdfHeader(doc, title) {
+      const now = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      doc.setFillColor(67, 97, 238);
+      doc.rect(0, 0, 297, 38, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+      doc.text('NexTrade', 14, 16);
+      doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+      doc.text('B2B Trading Platform', 14, 24);
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(title, 14, 33);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.text(`Generated: ${now}`, 297 - 14, 33, { align: 'right' });
+      doc.setFillColor(240, 244, 255);
+      doc.rect(0, 38, 297, 12, 'F');
+      doc.setTextColor(67, 97, 238); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(`${user.name}  •  ${user.businessName || user.email || ''}  •  Retailer`, 14, 46);
+      doc.setTextColor(51, 65, 85);
+    }
+
+    function addPdfFooter(doc) {
+      const pages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(220, 220, 220);
+        doc.line(14, 200, 283, 200);
+        doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.setFont('helvetica', 'normal');
+        doc.text('NexTrade  •  Confidential Business Report', 14, 205);
+        doc.text(`Page ${i} of ${pages}`, 283, 205, { align: 'right' });
+      }
+    }
+
+    function buildSummaryBox(doc, items, yStart) {
+      const colW = 269 / items.length;
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, yStart, 269, 22, 3, 3, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, yStart, 269, 22, 3, 3, 'S');
+      items.forEach((item, i) => {
+        const x = 14 + i * colW + colW / 2;
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(67, 97, 238);
+        doc.text(String(item.value), x, yStart + 9, { align: 'center' });
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(148, 163, 184);
+        doc.text(item.label, x, yStart + 16, { align: 'center' });
+      });
+      return yStart + 28;
+    }
+
+    async function generateRetailerDealsPDF() {
+      setLoading('rtlPdfBtn', true);
+      try {
+        const qs = buildQueryStr('rtlStartDate', 'rtlEndDate');
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/reports/retailer/deals' + qs, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        buildPdfHeader(doc, 'Deal History Report');
+
+        const summaryItems = [
+          { label: 'Total Deals', value: data.summary.totalDeals },
+          { label: 'Completed', value: data.summary.completedDeals },
+          { label: 'Pending', value: data.summary.pendingDeals },
+          { label: 'Est. Spending', value: fmtPDF(data.summary.totalSpending) }
+        ];
+        let y = buildSummaryBox(doc, summaryItems, 54);
+
+        doc.autoTable({
+          startY: y,
+          margin: { left: 14, right: 14 },
+          head: [['#', 'Wholesaler', 'Product', 'Qty', 'Final Price', 'Total Value', 'Status', 'Contact', 'Date']],
+          body: data.deals.map((d, i) => {
+            const ws = d.wholesalerId;
+            const wsName = ws ? (ws.businessName || ws.name || '—') : '—';
+            const contact = ws ? (ws.mobileNumber || ws.email || '—') : '—';
+            const total = (d.offeredPrice || 0) * (d.quantity || 0);
+            return [i + 1, wsName, d.productName || '—', d.quantity, fmtPDF(d.offeredPrice), fmtPDF(total), statusMap[d.status] || d.status, contact, fmtDate(d.createdAt)];
+          }),
+          headStyles: { fillColor: [67, 97, 238], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 8.5, textColor: [51, 65, 85] },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          columnStyles: { 0: { cellWidth: 8 }, 4: { halign: 'right' }, 5: { halign: 'right' } },
+          styles: { lineColor: [226, 232, 240], lineWidth: 0.1 }
+        });
+
+        addPdfFooter(doc);
+        doc.save(`NexTrade_Deal_History_${new Date().toISOString().slice(0,10)}.pdf`);
+        showRptToast('Deal History PDF downloaded!', 'success');
+      } catch (err) {
+        console.error(err);
+        showRptToast('Failed to generate PDF: ' + err.message, 'error');
+      } finally {
+        setLoading('rtlPdfBtn', false);
+      }
+    }
+
+    async function generateRetailerDealsExcel() {
+      setLoading('rtlXlsBtn', true);
+      try {
+        const qs = buildQueryStr('rtlStartDate', 'rtlEndDate');
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/reports/retailer/deals' + qs, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const wb = XLSX.utils.book_new();
+        const summaryRows = [
+          ['NexTrade — Deal History Report'],
+          ['Generated', new Date().toLocaleString('en-IN')],
+          ['User', user.name], ['Business', user.businessName || ''],
+          [],
+          ['SUMMARY'],
+          ['Total Deals', data.summary.totalDeals],
+          ['Completed', data.summary.completedDeals],
+          ['Pending', data.summary.pendingDeals],
+          ['Est. Spending', `₹${Number(data.summary.totalSpending).toLocaleString('en-IN')}`]
+        ];
+
+        const headers = ['#', 'Wholesaler Name', 'Contact', 'Product Name', 'Quantity', 'Final Price (₹)', 'Total Value (₹)', 'Deal Status', 'Deal Date'];
+        const rows = data.deals.map((d, i) => {
+          const ws = d.wholesalerId;
+          const wsName = ws ? (ws.businessName || ws.name || '—') : '—';
+          const contact = ws ? (ws.mobileNumber || ws.email || '—') : '—';
+          const total = (d.offeredPrice || 0) * (d.quantity || 0);
+          return [i + 1, wsName, contact, d.productName || '—', d.quantity, Number(d.offeredPrice), Number(total), statusMap[d.status] || d.status, fmtDate(d.createdAt)];
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet([...summaryRows, [], headers, ...rows]);
+        ws['!cols'] = [6, 28, 22, 28, 10, 16, 16, 16, 18].map(w => ({ wch: w }));
+        XLSX.utils.book_append_sheet(wb, ws, 'Deal History');
+        XLSX.writeFile(wb, `NexTrade_Deal_History_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showRptToast('Deal History Excel downloaded!', 'success');
+      } catch (err) {
+        console.error(err);
+        showRptToast('Failed to generate Excel: ' + err.message, 'error');
+      } finally {
+        setLoading('rtlXlsBtn', false);
+      }
+    }
+  </script>
 </body>
 </html>
